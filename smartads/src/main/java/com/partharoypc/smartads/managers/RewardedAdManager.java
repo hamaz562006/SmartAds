@@ -64,11 +64,17 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
         })) {
             return;
         }
-        String adUnitId = config.isTestMode() ? TestAdIds.ADMOB_REWARDED_ID : config.getAdMobRewardedId();
+        String adUnitId = (config.getAdMobRewardedId() != null && !config.getAdMobRewardedId().isEmpty())
+                ? config.getAdMobRewardedId()
+                : (config.isTestMode() ? TestAdIds.ADMOB_REWARDED_ID : null);
         if (adUnitId == null || adUnitId.isEmpty()) {
             if (config.isHouseAdsEnabled()) {
                 SmartAdsLogger.d("AdMob Rewarded ID not set. Trying House Ad.");
                 loadHouseAd(context, config);
+            } else {
+                adStatus = AdStatus.FAILED;
+                isLoading = false;
+                dismissLoadingDialog();
             }
             return;
         }

@@ -70,11 +70,16 @@ public class BannerAdManager {
         }
 
         // 2. Check Ad Unit ID
-        String adUnitId = config.isTestMode() ? TestAdIds.ADMOB_BANNER_ID : config.getAdMobBannerId();
+        String adUnitId = (config.getAdMobBannerId() != null && !config.getAdMobBannerId().isEmpty())
+                ? config.getAdMobBannerId()
+                : (config.isTestMode() ? TestAdIds.ADMOB_BANNER_ID : null);
         if (adUnitId == null || adUnitId.isEmpty()) {
             if (config.isHouseAdsEnabled()) {
                 SmartAdsLogger.d("AdMob Banner ID not set. Trying House Ad.");
                 loadHouseBanner(activity, adContainer, config, listener);
+            } else {
+                if (listener != null)
+                    listener.onAdFailed("Banner Ad Unit ID is not configured.");
             }
             return;
         }
@@ -138,6 +143,7 @@ public class BannerAdManager {
                     listener.onAdLoaded(admobBanner);
             }
 
+            @Override
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 SmartAdsLogger.e("❌ Banner Ad Failed to Load: " + loadAdError.getMessage());
                 if (loadAdError.getCode() == com.google.android.gms.ads.AdRequest.ERROR_CODE_NO_FILL) {
@@ -146,6 +152,10 @@ public class BannerAdManager {
                 // FALLBACK TO HOUSE AD
                 if (config.isHouseAdsEnabled()) {
                     loadHouseBanner(activity, adContainer, config, listener);
+                } else {
+                    if (listener != null) {
+                        listener.onAdFailed(loadAdError.getMessage());
+                    }
                 }
             }
 

@@ -29,6 +29,7 @@
     <string name="btn_privacy">Privacy Options</string>
     <string name="btn_shutdown">Shutdown SDK</string>
     <string name="btn_clear_logs">Clear Logs</string>
+    <string name="btn_copy_logs">Copy Logs</string>
 
 
 

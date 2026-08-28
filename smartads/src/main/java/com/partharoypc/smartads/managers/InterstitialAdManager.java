@@ -64,11 +64,17 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
         })) {
             return;
         }
-        String adUnitId = config.isTestMode() ? TestAdIds.ADMOB_INTERSTITIAL_ID : config.getAdMobInterstitialId();
+        String adUnitId = (config.getAdMobInterstitialId() != null && !config.getAdMobInterstitialId().isEmpty())
+                ? config.getAdMobInterstitialId()
+                : (config.isTestMode() ? TestAdIds.ADMOB_INTERSTITIAL_ID : null);
         if (adUnitId == null || adUnitId.isEmpty()) {
             if (config.isHouseAdsEnabled()) {
                 SmartAdsLogger.d("AdMob Int. ID not set. Trying House Ad.");
                 loadHouseAd(context, config);
+            } else {
+                adStatus = AdStatus.FAILED;
+                isLoading = false;
+                dismissLoadingDialog();
             }
             return;
         }

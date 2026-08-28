@@ -1,5 +1,6 @@
 package com.partharoypc.smartads.demo;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.util.Log;
@@ -23,6 +24,7 @@ import androidx.core.view.WindowInsetsCompat;
 import com.partharoypc.smartads.NativeAdSize;
 import com.partharoypc.smartads.SmartAds;
 import com.partharoypc.smartads.SmartAdsConfig;
+import com.partharoypc.smartads.SmartAdsLogger;
 import com.partharoypc.smartads.listeners.BannerAdListener;
 import com.partharoypc.smartads.listeners.InterstitialAdListener;
 import com.partharoypc.smartads.listeners.NativeAdListener;
@@ -65,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Logger
     private TextView textLogger;
-    private Button btnClearLog;
+    private Button btnClearLog, btnCopyLog;
     private ScrollView logScrollView;
 
     @Override
@@ -83,6 +85,12 @@ public class MainActivity extends AppCompatActivity {
         initViews();
         setupListeners();
         updateSdkStatus();
+
+        // Connect SDK Logger to Demo's Live Event Log
+        SmartAdsLogger.setLogListener(msg -> {
+            log(msg);
+            updateAdStatuses();
+        });
 
         // Setup Analytics Listener for Demo
         SmartAds.getInstance()
@@ -137,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
         // Logs
         textLogger = findViewById(R.id.text_logger);
         btnClearLog = findViewById(R.id.btn_clear_log);
+        btnCopyLog = findViewById(R.id.btn_copy_log);
         logScrollView = (ScrollView) textLogger.getParent();
     }
 
@@ -144,11 +153,15 @@ public class MainActivity extends AppCompatActivity {
         // --- General Settings Switches ---
 
         switchEnableAds.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            toggleAds(isChecked);
+            if (buttonView.isPressed()) {
+                toggleAds(isChecked);
+            }
         });
 
         switchForceHouseAds.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            toggleHouseAds(isChecked);
+            if (buttonView.isPressed()) {
+                toggleHouseAds(isChecked);
+            }
         });
 
         // Banner
@@ -174,6 +187,17 @@ public class MainActivity extends AppCompatActivity {
 
         // Log
         btnClearLog.setOnClickListener(v -> textLogger.setText("> Logs cleared...\n"));
+        btnCopyLog.setOnClickListener(v -> {
+            String logs = textLogger.getText().toString();
+            if (!logs.isEmpty()) {
+                android.content.ClipboardManager clipboard = (android.content.ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                android.content.ClipData clip = android.content.ClipData.newPlainText("Live Event Log", logs);
+                if (clipboard != null) {
+                    clipboard.setPrimaryClip(clip);
+                    showSnackbar("Logs copied to clipboard");
+                }
+            }
+        });
 
         // Debug Utilities
         btnAdInspector.setOnClickListener(v -> {
@@ -281,7 +305,7 @@ public class MainActivity extends AppCompatActivity {
         }
         com.partharoypc.smartads.SmartAdsConfig config = SmartAds.getInstance().getConfig();
         boolean isTestMode = config.isTestMode();
-        boolean areAdsEnabled = config.isAdsEnabled();
+        boolean areAdsEnabled = SmartAds.getInstance().areAdsEnabled();
         String version = SmartAds.getVersion();
 
         String mode = isTestMode ? getString(R.string.mode_test) : getString(R.string.mode_prod);
@@ -298,11 +322,6 @@ public class MainActivity extends AppCompatActivity {
         if (switchEnableAds.isChecked() != areAdsEnabled) {
             switchEnableAds.setChecked(areAdsEnabled);
         }
-
-        // We can check if we are in "Force House Ads" mode by checking if IDs are
-        // "invalid_id"
-        // But for simplicity, we just trust the UI state or keep it unchecked by
-        // default on invalid restart
     }
 
     private void toggleHouseAds(boolean forceHouseAds) {
@@ -323,7 +342,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             log("✅ Restoring AdMob Test IDs...");
             // Restore Test IDs (as seen in MyApplication)
-            builder.setAdMobBannerId("ca-app-pub-3940256099942544/6300978111")
+            builder.setAdMobBannerId("ca-app-pub-3940256099942544/9214589741")
                     .setAdMobInterstitialId("ca-app-pub-3940256099942544/1033173712")
                     .setAdMobRewardedId("ca-app-pub-3940256099942544/5224354917")
                     .setAdMobNativeId("ca-app-pub-3940256099942544/2247696110")

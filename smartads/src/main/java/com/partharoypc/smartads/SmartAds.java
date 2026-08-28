@@ -350,6 +350,9 @@ public class SmartAds {
      */
     public void setAdsEnabled(boolean enabled) {
         this.adsEnabled = enabled;
+        if (this.config != null) {
+            this.config = this.config.toBuilder().setAdsEnabled(enabled).build();
+        }
         SmartAdsLogger.d("Ads globally " + (enabled ? "ENABLED" : "DISABLED"));
     }
 

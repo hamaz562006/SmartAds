@@ -96,11 +96,16 @@ public class NativeAdManager {
         }
 
         // 2. Check Ad Unit ID
-        String adUnitId = config.isTestMode() ? TestAdIds.ADMOB_NATIVE_ID : config.getAdMobNativeId();
+        String adUnitId = (config.getAdMobNativeId() != null && !config.getAdMobNativeId().isEmpty())
+                ? config.getAdMobNativeId()
+                : (config.isTestMode() ? TestAdIds.ADMOB_NATIVE_ID : null);
         if (adUnitId == null || adUnitId.isEmpty()) {
             if (config.isHouseAdsEnabled()) {
                 SmartAdsLogger.d("AdMob Native ID not set. Trying House Ad.");
                 loadHouseNative(activity, adContainer, layoutRes, config, listener);
+            } else {
+                if (listener != null)
+                    listener.onAdFailed("Native Ad Unit ID is not configured.");
             }
             return;
         }
@@ -158,6 +163,10 @@ public class NativeAdManager {
                 // FALLBACK TO HOUSE NATIVE
                 if (config.isHouseAdsEnabled()) {
                     loadHouseNative(activity, adContainer, layoutRes, config, listener);
+                } else {
+                    if (listener != null) {
+                        listener.onAdFailed(loadAdError.getMessage());
+                    }
                 }
             }
 

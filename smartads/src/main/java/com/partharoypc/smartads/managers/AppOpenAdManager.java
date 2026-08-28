@@ -84,8 +84,10 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
             SmartAdsLogger.d("App Open Ad is currently loading. Skipping fetch.");
             return;
         }
-        String adUnitId = SmartAds.getInstance().getConfig().isTestMode() ? TestAdIds.ADMOB_APP_OPEN_ID
-                : SmartAds.getInstance().getConfig().getAdMobAppOpenId();
+        String adUnitId = (SmartAds.getInstance().getConfig().getAdMobAppOpenId() != null
+                && !SmartAds.getInstance().getConfig().getAdMobAppOpenId().isEmpty())
+                        ? SmartAds.getInstance().getConfig().getAdMobAppOpenId()
+                        : (SmartAds.getInstance().getConfig().isTestMode() ? TestAdIds.ADMOB_APP_OPEN_ID : null);
 
         if (adUnitId == null || adUnitId.isEmpty()) {
             if (SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
