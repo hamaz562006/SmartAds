@@ -72,7 +72,7 @@ public class MyApplication extends Application {
                                                 .setRating(4.5f)
                                                 .setClickUrl("https://google.com")
                                                 .build())
-                                .setHouseAdsEnabled(true)
+                                .setHouseAdsEnabled(false)
                                 .build();
 
                 SmartAds.initialize(this, config);
