@@ -5,10 +5,22 @@ import android.app.Application;
 import com.partharoypc.smartads.SmartAds;
 import com.partharoypc.smartads.SmartAdsConfig;
 
+import java.io.File;
+
 public class MyApplication extends Application {
         @Override
         public void onCreate() {
                 super.onCreate();
+
+                // Fix potential Chromium WebView Cache warning/error by ensuring the wasm directory exists
+                try {
+                        File webViewWasmDir = new File(getCacheDir(), "WebView/Default/HTTP Cache/Code Cache/wasm");
+                        if (!webViewWasmDir.exists()) {
+                                webViewWasmDir.mkdirs();
+                        }
+                } catch (Exception e) {
+                        e.printStackTrace();
+                }
 
                 SmartAdsConfig config = new SmartAdsConfig.Builder()
                                 .setAdsEnabled(true) // Global Master Switch

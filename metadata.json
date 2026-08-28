@@ -1,0 +1,8 @@
+{
+  "name": "Smart Ads Demo",
+  "description": "SmartAds demo application demonstrating AdMob banner, interstitial, rewarded, app open, and native ads integration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
