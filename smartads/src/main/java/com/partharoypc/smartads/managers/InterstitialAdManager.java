@@ -31,6 +31,43 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
     private boolean isHouseAdReady = false;
     private HouseAd selectedHouseAd;
     private int selectedHouseAdIndex = -1;
+    private final java.util.concurrent.atomic.AtomicInteger clickCounter = new java.util.concurrent.atomic.AtomicInteger(0);
+
+    /**
+     * Shows an Interstitial Ad every 'interval' clicks/triggers.
+     * If the interval is not reached, proceeds directly by invoking onAdDismissed().
+     *
+     * @param activity      Current activity.
+     * @param clickInterval Number of actions between ad displays (e.g., show every 3 clicks).
+     * @param listener      Ad lifecycle listener.
+     */
+    public void showAdWithInterval(Activity activity, int clickInterval, InterstitialAdListener listener) {
+        if (clickInterval <= 1) {
+            showAd(activity, listener);
+            return;
+        }
+
+        int currentCount = clickCounter.incrementAndGet();
+        SmartAdsLogger.d("Interstitial Click Counter: " + currentCount + " / " + clickInterval);
+
+        if (currentCount % clickInterval == 0) {
+            SmartAdsLogger.d("Interstitial Interval Reached (" + clickInterval + "). Showing ad.");
+            showAd(activity, listener);
+        } else {
+            SmartAdsLogger.d("Interstitial Interval not reached yet. Skipping ad.");
+            if (listener != null) {
+                listener.onAdDismissed();
+            }
+        }
+    }
+
+    public int getClickCount() {
+        return clickCounter.get();
+    }
+
+    public void resetClickCount() {
+        clickCounter.set(0);
+    }
 
     /**
      * Loads an Interstitial Ad.

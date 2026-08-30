@@ -12,6 +12,7 @@ public class SmartAdsConfig {
     private final String adMobBannerId;
     private final String adMobInterstitialId;
     private final String adMobRewardedId;
+    private final String adMobRewardedInterstitialId;
     private final String adMobNativeId;
 
     // Flags
@@ -19,6 +20,7 @@ public class SmartAdsConfig {
     private final boolean isTestMode;
     private final boolean isLoggingEnabled;
     private final boolean collapsibleBannerEnabled;
+    private final String collapsibleBannerPosition;
     private final boolean useUmpConsent;
     private final boolean houseAdsEnabled;
     private final int umpDebugGeography;
@@ -28,6 +30,7 @@ public class SmartAdsConfig {
     private final boolean bannerEnabled;
     private final boolean interstitialEnabled;
     private final boolean rewardedEnabled;
+    private final boolean rewardedInterstitialEnabled;
     private final boolean nativeEnabled;
     private final boolean appOpenEnabled;
 
@@ -58,12 +61,14 @@ public class SmartAdsConfig {
         this.adMobBannerId = builder.adMobBannerId;
         this.adMobInterstitialId = builder.adMobInterstitialId;
         this.adMobRewardedId = builder.adMobRewardedId;
+        this.adMobRewardedInterstitialId = builder.adMobRewardedInterstitialId;
         this.adMobNativeId = builder.adMobNativeId;
 
         this.adsEnabled = builder.adsEnabled;
         this.isTestMode = builder.isTestMode;
         this.isLoggingEnabled = builder.isLoggingEnabled;
         this.collapsibleBannerEnabled = builder.collapsibleBannerEnabled;
+        this.collapsibleBannerPosition = builder.collapsibleBannerPosition;
         this.useUmpConsent = builder.useUmpConsent;
         this.houseAdsEnabled = builder.houseAdsEnabled;
         this.umpDebugGeography = builder.umpDebugGeography;
@@ -72,6 +77,7 @@ public class SmartAdsConfig {
         this.bannerEnabled = builder.bannerEnabled;
         this.interstitialEnabled = builder.interstitialEnabled;
         this.rewardedEnabled = builder.rewardedEnabled;
+        this.rewardedInterstitialEnabled = builder.rewardedInterstitialEnabled;
         this.nativeEnabled = builder.nativeEnabled;
         this.appOpenEnabled = builder.appOpenEnabled;
 
@@ -111,6 +117,10 @@ public class SmartAdsConfig {
         return adMobRewardedId;
     }
 
+    public String getAdMobRewardedInterstitialId() {
+        return adMobRewardedInterstitialId;
+    }
+
     public String getAdMobNativeId() {
         return adMobNativeId;
     }
@@ -129,6 +139,10 @@ public class SmartAdsConfig {
 
     public boolean isCollapsibleBannerEnabled() {
         return collapsibleBannerEnabled;
+    }
+
+    public String getCollapsibleBannerPosition() {
+        return collapsibleBannerPosition;
     }
 
     public boolean useUmpConsent() {
@@ -157,6 +171,10 @@ public class SmartAdsConfig {
 
     public boolean isRewardedEnabled() {
         return rewardedEnabled;
+    }
+
+    public boolean isRewardedInterstitialEnabled() {
+        return rewardedInterstitialEnabled;
     }
 
     public boolean isNativeEnabled() {
@@ -235,13 +253,17 @@ public class SmartAdsConfig {
         return adMobRewardedId != null && !adMobRewardedId.isEmpty();
     }
 
+    public boolean isRewardedInterstitialConfigured() {
+        return adMobRewardedInterstitialId != null && !adMobRewardedInterstitialId.isEmpty();
+    }
+
     public boolean isNativeConfigured() {
         return adMobNativeId != null && !adMobNativeId.isEmpty();
     }
 
     public boolean isAnyAdConfigured() {
         return isAppOpenConfigured() || isBannerConfigured() || isInterstitialConfigured() ||
-                isRewardedConfigured() || isNativeConfigured();
+                isRewardedConfigured() || isRewardedInterstitialConfigured() || isNativeConfigured();
     }
 
     // =============================================================================================
@@ -254,6 +276,7 @@ public class SmartAdsConfig {
         private String adMobBannerId = "";
         private String adMobInterstitialId = "";
         private String adMobRewardedId = "";
+        private String adMobRewardedInterstitialId = "";
         private String adMobNativeId = "";
 
         // Flags (All Defaulted to FALSE)
@@ -261,6 +284,7 @@ public class SmartAdsConfig {
         private boolean isTestMode = false;
         private boolean isLoggingEnabled = false;
         private boolean collapsibleBannerEnabled = false;
+        private String collapsibleBannerPosition = "bottom";
         private boolean useUmpConsent = false;
         private boolean houseAdsEnabled = false;
         private int umpDebugGeography = com.google.android.ump.ConsentDebugSettings.DebugGeography.DEBUG_GEOGRAPHY_DISABLED;
@@ -271,6 +295,7 @@ public class SmartAdsConfig {
         private boolean bannerEnabled = true;
         private boolean interstitialEnabled = true;
         private boolean rewardedEnabled = true;
+        private boolean rewardedInterstitialEnabled = true;
         private boolean nativeEnabled = true;
         private boolean appOpenEnabled = true;
 
@@ -305,12 +330,14 @@ public class SmartAdsConfig {
             this.adMobBannerId = config.adMobBannerId;
             this.adMobInterstitialId = config.adMobInterstitialId;
             this.adMobRewardedId = config.adMobRewardedId;
+            this.adMobRewardedInterstitialId = config.adMobRewardedInterstitialId;
             this.adMobNativeId = config.adMobNativeId;
 
             this.adsEnabled = config.adsEnabled;
             this.isTestMode = config.isTestMode;
             this.isLoggingEnabled = config.isLoggingEnabled;
             this.collapsibleBannerEnabled = config.collapsibleBannerEnabled;
+            this.collapsibleBannerPosition = config.collapsibleBannerPosition;
             this.useUmpConsent = config.useUmpConsent;
             this.houseAdsEnabled = config.houseAdsEnabled;
             this.umpDebugGeography = config.umpDebugGeography;
@@ -319,6 +346,7 @@ public class SmartAdsConfig {
             this.bannerEnabled = config.bannerEnabled;
             this.interstitialEnabled = config.interstitialEnabled;
             this.rewardedEnabled = config.rewardedEnabled;
+            this.rewardedInterstitialEnabled = config.rewardedInterstitialEnabled;
             this.nativeEnabled = config.nativeEnabled;
             this.appOpenEnabled = config.appOpenEnabled;
 
@@ -373,6 +401,14 @@ public class SmartAdsConfig {
         }
 
         /**
+         * Sets the AdMob Rewarded Interstitial Ad unit ID.
+         */
+        public Builder setAdMobRewardedInterstitialId(String id) {
+            this.adMobRewardedInterstitialId = id;
+            return this;
+        }
+
+        /**
          * Sets the AdMob Native Ad unit ID.
          */
         public Builder setAdMobNativeId(String id) {
@@ -423,6 +459,14 @@ public class SmartAdsConfig {
         }
 
         /**
+         * Sets the position for collapsible banners ("top" or "bottom"). Default: "bottom"
+         */
+        public Builder setCollapsibleBannerPosition(String position) {
+            this.collapsibleBannerPosition = position;
+            return this;
+        }
+
+        /**
          * Sets whether to use Google UMP for consent. Default: false
          */
         public Builder setUseUmpConsent(boolean useUmp) {
@@ -467,6 +511,14 @@ public class SmartAdsConfig {
          */
         public Builder setRewardedEnabled(boolean enabled) {
             this.rewardedEnabled = enabled;
+            return this;
+        }
+
+        /**
+         * Enables or disables Rewarded Interstitial ads. Default: true
+         */
+        public Builder setRewardedInterstitialEnabled(boolean enabled) {
+            this.rewardedInterstitialEnabled = enabled;
             return this;
         }
 

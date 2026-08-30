@@ -27,12 +27,14 @@ public class MyApplication extends Application {
                                 .setBannerEnabled(true) // Granular Toggle
                                 .setInterstitialEnabled(true) // Granular Toggle
                                 .setRewardedEnabled(true) // Granular Toggle
+                                .setRewardedInterstitialEnabled(true) // Granular Toggle
                                 .setAppOpenEnabled(true) // Granular Toggle
                                 .setNativeEnabled(true) // Granular Toggle
                                 .setTestModeEnabled(true)
                                 .setAdMobBannerId("ca-app-pub-3940256099942544/6300978111")
                                 .setAdMobInterstitialId("ca-app-pub-3940256099942544/1033173712")
                                 .setAdMobRewardedId("ca-app-pub-3940256099942544/5224354917")
+                                .setAdMobRewardedInterstitialId("ca-app-pub-3940256099942544/5354046379")
                                 .setAdMobNativeId("ca-app-pub-3940256099942544/2247696110")
                                 .setAdMobAppOpenId("ca-app-pub-3940256099942544/9257395921")
                                 .setCollapsibleBannerEnabled(false)

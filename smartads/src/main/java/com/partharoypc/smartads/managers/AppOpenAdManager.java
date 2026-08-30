@@ -22,7 +22,10 @@ import com.partharoypc.smartads.house.HouseAdLoader;
 import com.partharoypc.smartads.house.HouseInterstitialActivity;
 import com.partharoypc.smartads.listeners.AppOpenAdListener;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Manages App Open Ads, including automatic lifecycle-based triggers and House
@@ -37,12 +40,33 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
     private long loadTimeMs = 0L;
     private static final long MAX_AD_AGE_MS = 4L * 60L * 60L * 1000L;
     private AppOpenAdListener developerListener;
+    private final Set<Class<? extends Activity>> disabledActivities = Collections.synchronizedSet(new HashSet<>());
 
     public AppOpenAdManager(Application application) {
         this.application = application;
         this.application.registerActivityLifecycleCallbacks(this);
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
         this.isAutoReloadEnabled = true;
+    }
+
+    /**
+     * Disables automatic App Open Ad triggers when this activity is in foreground.
+     */
+    public void disableAppOpenForActivity(Class<? extends Activity> activityClass) {
+        if (activityClass != null) {
+            disabledActivities.add(activityClass);
+            SmartAdsLogger.d("Disabled App Open Ad for: " + activityClass.getSimpleName());
+        }
+    }
+
+    /**
+     * Re-enables automatic App Open Ad triggers for this activity.
+     */
+    public void enableAppOpenForActivity(Class<? extends Activity> activityClass) {
+        if (activityClass != null) {
+            disabledActivities.remove(activityClass);
+            SmartAdsLogger.d("Re-enabled App Open Ad for: " + activityClass.getSimpleName());
+        }
     }
 
     /**
@@ -206,8 +230,11 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
             return;
         }
 
-        // Prevent showing ad on top of House Ad Activity or if already showing
-        if (isShowingAd || currentActivity instanceof HouseInterstitialActivity) {
+        // Prevent showing ad on top of House Ad Activity, disabled activities, or if already showing
+        if (isShowingAd || currentActivity instanceof HouseInterstitialActivity || disabledActivities.contains(currentActivity.getClass())) {
+            if (disabledActivities.contains(currentActivity.getClass())) {
+                SmartAdsLogger.d("App Open Ad skipped for disabled Activity: " + currentActivity.getClass().getSimpleName());
+            }
             return;
         }
 

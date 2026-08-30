@@ -177,7 +177,10 @@ public class BannerAdManager {
         AdRequest.Builder builder = new AdRequest.Builder();
         if (config.isCollapsibleBannerEnabled()) {
             android.os.Bundle extras = new android.os.Bundle();
-            extras.putString("collapsible", "bottom");
+            String pos = (config.getCollapsibleBannerPosition() != null && !config.getCollapsibleBannerPosition().isEmpty())
+                    ? config.getCollapsibleBannerPosition()
+                    : "bottom";
+            extras.putString("collapsible", pos);
             builder.addNetworkExtrasBundle(com.google.ads.mediation.admob.AdMobAdapter.class, extras);
         }
         admobBanner.loadAd(builder.build());

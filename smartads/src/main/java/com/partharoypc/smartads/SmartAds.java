@@ -22,11 +22,13 @@ import com.partharoypc.smartads.listeners.BannerAdListener;
 import com.partharoypc.smartads.listeners.InterstitialAdListener;
 import com.partharoypc.smartads.listeners.NativeAdListener;
 import com.partharoypc.smartads.listeners.RewardedAdListener;
+import com.partharoypc.smartads.listeners.RewardedInterstitialAdListener;
 import com.partharoypc.smartads.managers.AppOpenAdManager;
 import com.partharoypc.smartads.managers.BannerAdManager;
 import com.partharoypc.smartads.managers.InterstitialAdManager;
 import com.partharoypc.smartads.managers.NativeAdManager;
 import com.partharoypc.smartads.managers.RewardedAdManager;
+import com.partharoypc.smartads.managers.RewardedInterstitialAdManager;
 
 public class SmartAds {
 
@@ -36,6 +38,7 @@ public class SmartAds {
     private AppOpenAdManager appOpenAdManager;
     private InterstitialAdManager interstitialAdManager;
     private RewardedAdManager rewardedAdManager;
+    private RewardedInterstitialAdManager rewardedInterstitialAdManager;
 
     private BannerAdManager bannerAdManager;
     private NativeAdManager nativeAdManager;
@@ -129,6 +132,9 @@ public class SmartAds {
         }
         if (rewardedAdManager == null) {
             rewardedAdManager = new RewardedAdManager();
+        }
+        if (rewardedInterstitialAdManager == null) {
+            rewardedInterstitialAdManager = new RewardedInterstitialAdManager();
         }
         if (bannerAdManager == null) {
             bannerAdManager = new BannerAdManager();
@@ -240,12 +246,31 @@ public class SmartAds {
         appOpenAdManager = null;
         interstitialAdManager = null;
         rewardedAdManager = null;
+        rewardedInterstitialAdManager = null;
         bannerAdManager = null;
         nativeAdManager = null;
         analyticsListener = null;
         application = null;
         instance = null;
         SmartAdsLogger.d("SmartAds SDK Shutdown complete.");
+    }
+
+    /**
+     * Disables automatic App Open Ads for a specific Activity class.
+     */
+    public void disableAppOpenForActivity(Class<? extends Activity> activityClass) {
+        if (appOpenAdManager != null) {
+            appOpenAdManager.disableAppOpenForActivity(activityClass);
+        }
+    }
+
+    /**
+     * Re-enables automatic App Open Ads for a specific Activity class.
+     */
+    public void enableAppOpenForActivity(Class<? extends Activity> activityClass) {
+        if (appOpenAdManager != null) {
+            appOpenAdManager.enableAppOpenForActivity(activityClass);
+        }
     }
 
     /**
@@ -271,7 +296,7 @@ public class SmartAds {
     }
 
     /**
-     * Pre-loads ads (App Open, Interstitial, Rewarded) based on configuration.
+     * Pre-loads ads (App Open, Interstitial, Rewarded, Rewarded Interstitial) based on configuration.
      * Should be called after initialization or when appropriate.
      */
     public void preloadAds(Context context) {
@@ -286,6 +311,9 @@ public class SmartAds {
         }
         if (rewardedAdManager != null && config.isRewardedConfigured() && config.isRewardedEnabled()) {
             rewardedAdManager.loadAd(context, config);
+        }
+        if (rewardedInterstitialAdManager != null && config.isRewardedInterstitialConfigured() && config.isRewardedInterstitialEnabled()) {
+            rewardedInterstitialAdManager.loadAd(context, config);
         }
     }
 
@@ -458,6 +486,22 @@ public class SmartAds {
         }
     }
 
+    /**
+     * Shows the Interstitial Ad every 'interval' clicks/triggers.
+     *
+     * @param activity      Current activity.
+     * @param clickInterval Number of actions between ad displays.
+     * @param listener      The listener for ad events.
+     */
+    public void showInterstitialAdWithInterval(Activity activity, int clickInterval, InterstitialAdListener listener) {
+        if (canShowAds() && config.isInterstitialEnabled()) {
+            interstitialAdManager.showAdWithInterval(activity, clickInterval, listener);
+        } else {
+            if (listener != null)
+                listener.onAdDismissed();
+        }
+    }
+
     public AdStatus getInterstitialAdStatus() {
         return interstitialAdManager.getAdStatus();
     }
@@ -499,12 +543,50 @@ public class SmartAds {
         return rewardedAdManager.getAdStatus();
     }
 
+    // --- Rewarded Interstitial Ads ---
+
+    /**
+     * Checks if a Rewarded Interstitial Ad is loaded and ready to show.
+     */
+    public boolean isRewardedInterstitialAdAvailable() {
+        return rewardedInterstitialAdManager != null && rewardedInterstitialAdManager.getAdStatus() == AdStatus.LOADED;
+    }
+
+    /**
+     * Manually starts loading a Rewarded Interstitial Ad.
+     */
+    public void loadRewardedInterstitialAd(Context context) {
+        if (canShowAds()) {
+            rewardedInterstitialAdManager.loadAd(context, config);
+        }
+    }
+
+    /**
+     * Shows a Rewarded Interstitial Ad if loaded.
+     *
+     * @param activity Current activity.
+     * @param listener Callback listener.
+     */
+    public void showRewardedInterstitialAd(Activity activity, com.partharoypc.smartads.listeners.RewardedInterstitialAdListener listener) {
+        if (canShowAds() && config.isRewardedInterstitialConfigured() && config.isRewardedInterstitialEnabled()) {
+            rewardedInterstitialAdManager.showAd(activity, listener);
+        } else {
+            if (listener != null)
+                listener.onAdFailedToShow("Ad condition not met or Rewarded Interstitial ads disabled.");
+        }
+    }
+
+    public AdStatus getRewardedInterstitialAdStatus() {
+        return rewardedInterstitialAdManager != null ? rewardedInterstitialAdManager.getAdStatus() : AdStatus.IDLE;
+    }
+
     public boolean isAnyAdShowing() {
         boolean interShowing = interstitialAdManager != null && interstitialAdManager.getAdStatus() == AdStatus.SHOWN;
         boolean rewardedShowing = rewardedAdManager != null && rewardedAdManager.getAdStatus() == AdStatus.SHOWN;
+        boolean rewardedInterShowing = rewardedInterstitialAdManager != null && rewardedInterstitialAdManager.getAdStatus() == AdStatus.SHOWN;
         boolean appOpenShowing = appOpenAdManager != null
                 && (appOpenAdManager.getAdStatus() == AdStatus.SHOWN || appOpenAdManager.isShowingAd());
-        return interShowing || rewardedShowing || appOpenShowing;
+        return interShowing || rewardedShowing || rewardedInterShowing || appOpenShowing;
     }
 
     // --- Banner Ads ---

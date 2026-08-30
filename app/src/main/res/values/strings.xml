@@ -8,6 +8,7 @@
     <string name="header_banner">Banner Ad</string>
     <string name="header_interstitial">Interstitial Ad</string>
     <string name="header_rewarded">Rewarded Ad</string>
+    <string name="header_rewarded_interstitial">Rewarded Interstitial</string>
     <string name="header_app_open">App Open Ad (Manual)</string>
     <string name="header_native">Native Ad</string>
     <string name="header_debug">Debug Utilities</string>
@@ -25,11 +26,14 @@
     <string name="btn_collapsible">Collapsible</string>
     <string name="btn_show_app_open">Show App Open Ad</string>
     <string name="btn_load_native">Load Native</string>
+    <string name="btn_show_interval">Show Interval (3x)</string>
+    <string name="btn_test_splash">Test Splash Flow</string>
     <string name="btn_ad_inspector">Ad Inspector</string>
     <string name="btn_privacy">Privacy Options</string>
     <string name="btn_shutdown">Shutdown SDK</string>
     <string name="btn_clear_logs">Clear Logs</string>
     <string name="btn_copy_logs">Copy Logs</string>
+    <string name="switch_app_open_activity">App Open for this Activity</string>
 
 
 

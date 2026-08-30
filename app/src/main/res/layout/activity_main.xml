@@ -254,6 +254,16 @@
                                     android:text="@string/btn_show"
                                     android:textColor="@android:color/white" />
                             </LinearLayout>
+
+                            <Button
+                                android:id="@+id/btn_show_interstitial_interval"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="@string/btn_show_interval"
+                                android:textColor="@color/colorPrimary"
+                                app:strokeColor="@color/colorPrimary" />
                         </LinearLayout>
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
@@ -262,6 +272,7 @@
                 <androidx.cardview.widget.CardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="2dp">
 
@@ -339,6 +350,87 @@
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 
+                <!-- Rewarded Interstitial -->
+                <androidx.cardview.widget.CardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="2dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/gradient_header"
+                            android:gravity="center_vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="@string/header_rewarded_interstitial"
+                                android:textColor="@color/white"
+                                android:textSize="18sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:id="@+id/status_rewarded_interstitial"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/rounded_status_bg"
+                                android:backgroundTint="#20FFFFFF"
+                                android:paddingHorizontal="10dp"
+                                android:paddingVertical="4dp"
+                                android:text="@string/label_not_loaded"
+                                android:textColor="@color/white"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="20dp">
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="0dp"
+                                tools:ignore="UselessParent">
+
+                                <Button
+                                    android:id="@+id/btn_load_rewarded_interstitial"
+                                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginEnd="8dp"
+                                    android:layout_weight="1"
+                                    android:text="@string/btn_load"
+                                    android:textColor="@color/colorPrimary"
+                                    app:strokeColor="@color/colorPrimary" />
+
+                                <Button
+                                    android:id="@+id/btn_show_rewarded_interstitial"
+                                    style="@style/Widget.MaterialComponents.Button"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="8dp"
+                                    android:layout_weight="1"
+                                    android:backgroundTint="@color/colorSecondary"
+                                    android:enabled="false"
+                                    android:text="@string/btn_show"
+                                    android:textColor="@android:color/white" />
+                            </LinearLayout>
+                        </LinearLayout>
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+
             </LinearLayout>
 
 
@@ -400,6 +492,26 @@
                             android:text="@string/btn_show_app_open"
                             android:textColor="@color/colorPrimary"
                             app:strokeColor="@color/colorPrimary" />
+
+                        <Button
+                            android:id="@+id/btn_test_splash"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:text="@string/btn_test_splash"
+                            android:textColor="@color/colorPrimary"
+                            app:strokeColor="@color/colorPrimary" />
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switch_app_open_activity"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:checked="true"
+                            android:text="@string/switch_app_open_activity"
+                            android:textColor="@color/text_primary"
+                            android:textSize="14sp" />
 
                         <TextView
                             android:layout_width="wrap_content"

@@ -51,14 +51,23 @@ public class MainActivity extends AppCompatActivity {
     private TextView statusRewarded;
     private Button btnLoadRewarded, btnShowRewarded;
 
+    // Rewarded Interstitial
+    private TextView statusRewardedInterstitial;
+    private Button btnLoadRewardedInterstitial, btnShowRewardedInterstitial;
+
     // App Open
     private TextView statusAppOpen;
-    private Button btnShowAppOpen;
+    private Button btnShowAppOpen, btnTestSplash;
+    private com.google.android.material.switchmaterial.SwitchMaterial switchAppOpenActivity;
 
     // Native
     private RadioGroup radioGroupNativeSize;
     private Button btnLoadNative;
     private FrameLayout nativeContainer;
+
+    // Interstitial interval
+    private Button btnShowInterstitialInterval;
+    private int clickCount = 0;
 
     // Debug Utilities
     private Button btnAdInspector, btnPrivacyOptions, btnShutdownSdk, btnPreviewLoadingDialog, btnPreloadAds;
@@ -117,15 +126,23 @@ public class MainActivity extends AppCompatActivity {
         statusInterstitial = findViewById(R.id.status_interstitial);
         btnLoadInterstitial = findViewById(R.id.btn_load_interstitial);
         btnShowInterstitial = findViewById(R.id.btn_show_interstitial);
+        btnShowInterstitialInterval = findViewById(R.id.btn_show_interstitial_interval);
 
         // Rewarded
         statusRewarded = findViewById(R.id.status_rewarded);
         btnLoadRewarded = findViewById(R.id.btn_load_rewarded);
         btnShowRewarded = findViewById(R.id.btn_show_rewarded);
 
+        // Rewarded Interstitial
+        statusRewardedInterstitial = findViewById(R.id.status_rewarded_interstitial);
+        btnLoadRewardedInterstitial = findViewById(R.id.btn_load_rewarded_interstitial);
+        btnShowRewardedInterstitial = findViewById(R.id.btn_show_rewarded_interstitial);
+
         // App Open
         statusAppOpen = findViewById(R.id.status_app_open);
         btnShowAppOpen = findViewById(R.id.btn_show_app_open);
+        btnTestSplash = findViewById(R.id.btn_test_splash);
+        switchAppOpenActivity = findViewById(R.id.switch_app_open_activity);
 
         // Native
         radioGroupNativeSize = findViewById(R.id.radio_group_native_size);
@@ -171,15 +188,34 @@ public class MainActivity extends AppCompatActivity {
         // Interstitial
         btnLoadInterstitial.setOnClickListener(v -> loadInterstitial());
         btnShowInterstitial.setOnClickListener(v -> showInterstitial());
+        btnShowInterstitialInterval.setOnClickListener(v -> showInterstitialInterval());
 
         // Rewarded
         btnLoadRewarded.setOnClickListener(v -> loadRewarded());
         btnShowRewarded.setOnClickListener(v -> showRewarded());
 
+        // Rewarded Interstitial
+        btnLoadRewardedInterstitial.setOnClickListener(v -> loadRewardedInterstitial());
+        btnShowRewardedInterstitial.setOnClickListener(v -> showRewardedInterstitial());
+
         // App Open
         btnShowAppOpen.setOnClickListener(v -> {
             log("Attempting to show App Open Ad...");
             SmartAds.getInstance().showAppOpenAd(this);
+        });
+
+        btnTestSplash.setOnClickListener(v -> testSplashFlow());
+
+        switchAppOpenActivity.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                SmartAds.getInstance().enableAppOpenForActivity(MainActivity.class);
+                log("🟢 App Open Ads ENABLED for MainActivity");
+                showSnackbar("App Open Enabled for MainActivity");
+            } else {
+                SmartAds.getInstance().disableAppOpenForActivity(MainActivity.class);
+                log("🔴 App Open Ads DISABLED for MainActivity");
+                showSnackbar("App Open Disabled for MainActivity");
+            }
         });
 
         // Native
@@ -282,13 +318,16 @@ public class MainActivity extends AppCompatActivity {
         btnLoadCollapsible.setEnabled(false);
         btnLoadInterstitial.setEnabled(false);
         btnShowInterstitial.setEnabled(false);
+        btnShowInterstitialInterval.setEnabled(false);
         btnLoadRewarded.setEnabled(false);
         btnShowRewarded.setEnabled(false);
+        btnLoadRewardedInterstitial.setEnabled(false);
+        btnShowRewardedInterstitial.setEnabled(false);
         btnShowAppOpen.setEnabled(false);
+        btnTestSplash.setEnabled(false);
         btnLoadNative.setEnabled(false);
 
         btnAdInspector.setEnabled(false);
-        btnPrivacyOptions.setEnabled(false);
         btnPrivacyOptions.setEnabled(false);
         btnShutdownSdk.setEnabled(false);
         btnPreviewLoadingDialog.setEnabled(false);
@@ -336,6 +375,7 @@ public class MainActivity extends AppCompatActivity {
             builder.setAdMobBannerId("invalid_id")
                     .setAdMobInterstitialId("invalid_id")
                     .setAdMobRewardedId("invalid_id")
+                    .setAdMobRewardedInterstitialId("invalid_id")
                     .setAdMobNativeId("invalid_id")
                     .setAdMobAppOpenId("invalid_id")
                     .setHouseAdsEnabled(true); // Ensure house ads are ON
@@ -345,6 +385,7 @@ public class MainActivity extends AppCompatActivity {
             builder.setAdMobBannerId("ca-app-pub-3940256099942544/9214589741")
                     .setAdMobInterstitialId("ca-app-pub-3940256099942544/1033173712")
                     .setAdMobRewardedId("ca-app-pub-3940256099942544/5224354917")
+                    .setAdMobRewardedInterstitialId("ca-app-pub-3940256099942544/5354046379")
                     .setAdMobNativeId("ca-app-pub-3940256099942544/2247696110")
                     .setAdMobAppOpenId("ca-app-pub-3940256099942544/9257395921");
         }
@@ -398,6 +439,16 @@ public class MainActivity extends AppCompatActivity {
             String status = SmartAds.getInstance().getRewardedAdStatus().name();
             setStatus(statusRewarded, status, R.color.text_secondary);
             btnShowRewarded.setEnabled(false);
+        }
+
+        // Rewarded Interstitial Status
+        if (SmartAds.getInstance().isRewardedInterstitialAdAvailable()) {
+            setStatus(statusRewardedInterstitial, "READY", R.color.green_success);
+            btnShowRewardedInterstitial.setEnabled(true);
+        } else {
+            String status = SmartAds.getInstance().getRewardedInterstitialAdStatus().name();
+            setStatus(statusRewardedInterstitial, status, R.color.text_secondary);
+            btnShowRewardedInterstitial.setEnabled(false);
         }
     }
 
@@ -476,6 +527,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void showInterstitialInterval() {
+        clickCount++;
+        log("Interval action triggered (Click #" + clickCount + " - interval target: 3)...");
+        SmartAds.getInstance().showInterstitialAdWithInterval(this, 3, new InterstitialAdListener() {
+            @Override
+            public void onAdDismissed() {
+                log("Interval Interstitial Dismissed");
+                updateAdStatuses();
+            }
+
+            @Override
+            public void onAdFailedToShow(String errorMessage) {
+                log("Interval Interstitial Failed to Show: " + errorMessage);
+                updateAdStatuses();
+            }
+        });
+    }
+
     // ================= REWARDED =================
     private void loadRewarded() {
         log("Loading Rewarded Ad...");
@@ -513,6 +582,60 @@ public class MainActivity extends AppCompatActivity {
             log("Rewarded Ad not ready yet.");
             showSnackbar("Rewarded ad not ready");
         }
+    }
+
+    // ================= REWARDED INTERSTITIAL =================
+    private void loadRewardedInterstitial() {
+        log("Loading Rewarded Interstitial...");
+        setStatus(statusRewardedInterstitial, "Loading...", R.color.text_primary);
+        btnShowRewardedInterstitial.setEnabled(false);
+
+        SmartAds.getInstance().loadRewardedInterstitialAd(this);
+
+        statusRewardedInterstitial.postDelayed(this::updateAdStatuses, 2000);
+    }
+
+    private void showRewardedInterstitial() {
+        if (SmartAds.getInstance().isRewardedInterstitialAdAvailable()) {
+            SmartAds.getInstance().showRewardedInterstitialAd(this, new com.partharoypc.smartads.listeners.RewardedInterstitialAdListener() {
+                @Override
+                public void onUserEarnedReward() {
+                    log("🎁 User Earned Rewarded Interstitial Reward!");
+                    showSnackbar("🎁 Rewarded Interstitial Reward Earned!");
+                }
+
+                @Override
+                public void onAdDismissed() {
+                    log("Rewarded Interstitial Dismissed");
+                    setStatus(statusRewardedInterstitial, "Dismissed", R.color.text_secondary);
+                    btnShowRewardedInterstitial.setEnabled(false);
+                }
+
+                @Override
+                public void onAdFailedToShow(String errorMessage) {
+                    log("Rewarded Interstitial Failed to Show: " + errorMessage);
+                    setStatus(statusRewardedInterstitial, "Failed", R.color.red_error);
+                }
+            });
+        } else {
+            log("Rewarded Interstitial not ready yet.");
+            showSnackbar("Rewarded Interstitial ad not ready");
+        }
+    }
+
+    // ================= SPLASH HELPER SIMULATION =================
+    private void testSplashFlow() {
+        log("Testing Splash Flow (timeout 5s)...");
+        showSnackbar("Starting Splash Flow Test...");
+        com.partharoypc.smartads.utils.SplashAdHelper.loadAndShowSplashAd(
+                this,
+                com.partharoypc.smartads.utils.SplashAdHelper.SplashAdType.INTERSTITIAL,
+                5000L,
+                () -> {
+                    log("✨ Splash Flow Complete! Moving to main app content.");
+                    showSnackbar("Splash Flow Complete!");
+                }
+        );
     }
 
     // ================= NATIVE =================
