@@ -248,6 +248,7 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
             public void onAdShowedFullScreenContent() {
                 adStatus = AdStatus.SHOWN;
                 lastShownTime = System.currentTimeMillis();
+                AdFrequencyManager.getInstance().recordRewardedShown();
                 if (developerListener != null) {
                     developerListener.onAdImpression();
                 }
@@ -298,6 +299,7 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
                     public void onAdImpression() {
                         adStatus = AdStatus.SHOWN;
                         lastShownTime = System.currentTimeMillis();
+                        AdFrequencyManager.getInstance().recordRewardedShown();
                         if (developerListener != null)
                             developerListener.onAdImpression();
                     }

@@ -229,6 +229,7 @@ public class RewardedInterstitialAdManager extends BaseFullScreenAdManager {
                 SmartAdsLogger.d("Rewarded Interstitial Ad Shown.");
                 adStatus = AdStatus.SHOWN;
                 lastShownTime = System.currentTimeMillis();
+                AdFrequencyManager.getInstance().recordRewardedShown();
                 dismissLoadingDialog();
             }
 
@@ -283,6 +284,7 @@ public class RewardedInterstitialAdManager extends BaseFullScreenAdManager {
                     public void onAdImpression() {
                         adStatus = AdStatus.SHOWN;
                         lastShownTime = System.currentTimeMillis();
+                        AdFrequencyManager.getInstance().recordRewardedShown();
                         dismissLoadingDialog();
                         if (developerListener != null)
                             developerListener.onAdImpression();

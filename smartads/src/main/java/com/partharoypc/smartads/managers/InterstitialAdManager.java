@@ -212,8 +212,12 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
             return;
         }
 
-        if (isFrequencyCapped(SmartAds.getInstance().getConfig())) {
-            SmartAdsLogger.d("Ad Frequency Capped. Skipping.");
+        SmartAdsConfig config = SmartAds.getInstance().getConfig();
+        long ivInterval = config != null ? config.getInterstitialIntervalSeconds() : 30L;
+        long rvDelay = config != null ? config.getDelayAfterRewardedSeconds() : 30L;
+
+        if (!AdFrequencyManager.getInstance().canShowInterstitial(ivInterval, rvDelay) || isFrequencyCapped(config)) {
+            SmartAdsLogger.d("Ad Frequency Capped (time-based interval). Skipping.");
             if (listener != null)
                 listener.onAdFailedToShow("Ad is frequency capped.");
             return;
@@ -222,11 +226,10 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
         if (adStatus != AdStatus.LOADED) {
             // Not loaded -> load and wait
             SmartAdsLogger.d("Ad not loaded. Starting load...");
-            SmartAdsConfig config = SmartAds.getInstance().getConfig();
 
             // Check if we can load anything (Network OR House Ads)
             boolean isNetworkAvailable = com.partharoypc.smartads.utils.NetworkUtils.isNetworkAvailable(activity);
-            boolean hasHouseAds = config.isHouseAdsEnabled() && !config.getHouseAds().isEmpty();
+            boolean hasHouseAds = config != null && config.isHouseAdsEnabled() && !config.getHouseAds().isEmpty();
 
             if (!isNetworkAvailable && !hasHouseAds) {
                 SmartAdsLogger.d("No Internet and No House Ads. Cannot show ad.");
@@ -286,6 +289,7 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
             public void onAdShowedFullScreenContent() {
                 adStatus = AdStatus.SHOWN;
                 lastShownTime = System.currentTimeMillis();
+                AdFrequencyManager.getInstance().recordInterstitialShown();
                 if (developerListener != null) {
                     developerListener.onAdImpression();
                 }
@@ -326,6 +330,7 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
                     public void onAdImpression() {
                         adStatus = AdStatus.SHOWN;
                         lastShownTime = System.currentTimeMillis();
+                        AdFrequencyManager.getInstance().recordInterstitialShown();
                         if (developerListener != null)
                             developerListener.onAdImpression();
                     }

@@ -21,6 +21,13 @@ public final class SmartAdsRemoteConfigMapper {
      * @return The updated builder.
      */
     public static SmartAdsConfig.Builder applyMap(SmartAdsConfig.Builder builder, Map<String, ?> remoteValues) {
+        return applyRemoteConfig(builder, remoteValues);
+    }
+
+    /**
+     * Alias for applyMap.
+     */
+    public static SmartAdsConfig.Builder applyRemoteConfig(SmartAdsConfig.Builder builder, Map<String, ?> remoteValues) {
         if (builder == null || remoteValues == null) {
             return builder != null ? builder : new SmartAdsConfig.Builder();
         }
@@ -32,41 +39,73 @@ public final class SmartAdsRemoteConfigMapper {
 
             String lowerKey = key.toLowerCase();
 
+            if (lowerKey.startsWith("preload_")) {
+                String screen = key.substring(8);
+                builder.addScreenPreloadRule(screen, String.valueOf(val));
+                continue;
+            }
+
             switch (lowerKey) {
                 case "enable_ads":
                 case "ads_enabled":
                     builder.setAdsEnabled(parseBoolean(val));
                     break;
+                case "is_premium":
+                case "premium_user":
+                case "premium":
+                case "user_premium":
+                    builder.setPremium(parseBoolean(val));
+                    break;
                 case "is_test_mode":
                 case "test_mode":
+                case "debug_mode":
                     builder.setTestModeEnabled(parseBoolean(val));
                     break;
                 case "enable_banner":
                 case "banner_enabled":
+                case "banner_enable":
+                case "enable_bn":
+                case "bn_enable":
                     builder.setBannerEnabled(parseBoolean(val));
                     break;
                 case "enable_interstitial":
                 case "interstitial_enabled":
+                case "interstitial_enable":
+                case "enable_iv":
+                case "iv_enable":
                     builder.setInterstitialEnabled(parseBoolean(val));
                     break;
                 case "enable_rewarded":
                 case "rewarded_enabled":
+                case "rewarded_enable":
+                case "enable_rv":
+                case "rv_enable":
                     builder.setRewardedEnabled(parseBoolean(val));
                     break;
                 case "enable_rewarded_interstitial":
                 case "rewarded_interstitial_enabled":
+                case "rewarded_interstitial_enable":
+                case "enable_ri":
+                case "ri_enable":
                     builder.setRewardedInterstitialEnabled(parseBoolean(val));
                     break;
                 case "enable_native":
                 case "native_enabled":
+                case "native_enable":
+                case "enable_nt":
+                case "nt_enable":
                     builder.setNativeEnabled(parseBoolean(val));
                     break;
                 case "enable_app_open":
                 case "app_open_enabled":
+                case "app_open_enable":
+                case "enable_ao":
+                case "ao_enable":
                     builder.setAppOpenEnabled(parseBoolean(val));
                     break;
                 case "enable_collapsible_banner":
                 case "collapsible_banner_enabled":
+                case "collapsible_banner_enable":
                     builder.setCollapsibleBannerEnabled(parseBoolean(val));
                     break;
                 case "collapsible_banner_position":
@@ -74,6 +113,7 @@ public final class SmartAdsRemoteConfigMapper {
                     break;
                 case "enable_house_ads":
                 case "house_ads_enabled":
+                case "house_ads_enable":
                     builder.setHouseAdsEnabled(parseBoolean(val));
                     break;
                 case "banner_id":
@@ -103,6 +143,21 @@ public final class SmartAdsRemoteConfigMapper {
                 case "frequency_cap_seconds":
                 case "frequency_cap":
                     builder.setFrequencyCapSeconds(parseLong(val, 30L));
+                    break;
+                case "iv_interval":
+                case "interstitial_interval":
+                case "interstitial_interval_seconds":
+                    builder.setInterstitialIntervalSeconds(parseLong(val, 30L));
+                    break;
+                case "rv_to_iv_delay":
+                case "delay_after_rewarded":
+                case "delay_after_rewarded_seconds":
+                    builder.setDelayAfterRewardedSeconds(parseLong(val, 30L));
+                    break;
+                case "ao_interval":
+                case "app_open_interval":
+                case "app_open_interval_seconds":
+                    builder.setAppOpenIntervalSeconds(parseLong(val, 15L));
                     break;
                 default:
                     break;

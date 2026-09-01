@@ -26,6 +26,7 @@ import com.partharoypc.smartads.TestAdIds;
 import com.partharoypc.smartads.house.HouseAd;
 import com.partharoypc.smartads.house.HouseAdLoader;
 import com.partharoypc.smartads.listeners.NativeAdListener;
+import com.partharoypc.smartads.ui.NativeAdBinder;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -42,7 +43,19 @@ public class NativeAdManager {
      */
     public void loadAndShowAd(Activity activity, FrameLayout adContainer, @LayoutRes int layoutRes,
             SmartAdsConfig config, NativeAdListener listener) {
-        loadAdMob(activity, adContainer, layoutRes, config, listener);
+        loadAdMob(activity, adContainer, layoutRes, null, config, listener);
+    }
+
+    /**
+     * Loads and shows a Native Ad into a container using a custom NativeAdBinder.
+     */
+    public void loadAndShowAd(Activity activity, FrameLayout adContainer, NativeAdBinder binder,
+            SmartAdsConfig config, NativeAdListener listener) {
+        if (binder == null) {
+            if (listener != null) listener.onAdFailed("NativeAdBinder is null.");
+            return;
+        }
+        loadAdMob(activity, adContainer, binder.getLayoutResId(), binder, config, listener);
     }
 
     /**
@@ -66,10 +79,11 @@ public class NativeAdManager {
                 layoutRes = R.layout.smartads_native_ad_medium;
                 break;
         }
-        loadAdMob(activity, adContainer, layoutRes, config, listener);
+        loadAdMob(activity, adContainer, layoutRes, null, config, listener);
     }
 
-    private void loadAdMob(Activity activity, FrameLayout adContainer, @LayoutRes int layoutRes, SmartAdsConfig config,
+    private void loadAdMob(Activity activity, FrameLayout adContainer, @LayoutRes int layoutRes,
+            NativeAdBinder customBinder, SmartAdsConfig config,
             NativeAdListener listener) {
         if (!SmartAds.getInstance().areAdsEnabled() || !config.isNativeEnabled()) {
             SmartAdsLogger.d("Native Ad is disabled. Skipping request.");
@@ -146,7 +160,7 @@ public class NativeAdManager {
             activeAds.put(adContainer, nativeAd);
 
             NativeAdView adView = (NativeAdView) LayoutInflater.from(activity).inflate(layoutRes, adContainer, false);
-            populateAdMobNativeAdView(nativeAd, adView);
+            populateAdMobNativeAdView(nativeAd, adView, customBinder);
             adContainer.removeAllViews();
             adContainer.addView(adView);
             if (listener != null)
@@ -230,14 +244,26 @@ public class NativeAdManager {
         }
     }
 
-    private void populateAdMobNativeAdView(NativeAd nativeAd, NativeAdView adView) {
-        adView.setMediaView(adView.findViewById(R.id.smartads_ad_media));
-        adView.setHeadlineView(adView.findViewById(R.id.smartads_ad_headline));
-        adView.setBodyView(adView.findViewById(R.id.smartads_ad_body));
-        adView.setCallToActionView(adView.findViewById(R.id.smartads_ad_call_to_action));
-        adView.setIconView(adView.findViewById(R.id.smartads_ad_app_icon));
-        adView.setStarRatingView(adView.findViewById(R.id.smartads_ad_stars));
-        adView.setAdvertiserView(adView.findViewById(R.id.smartads_ad_advertiser));
+    private void populateAdMobNativeAdView(NativeAd nativeAd, NativeAdView adView, NativeAdBinder binder) {
+        if (binder != null) {
+            if (binder.getMediaViewId() != 0) adView.setMediaView(adView.findViewById(binder.getMediaViewId()));
+            if (binder.getHeadlineViewId() != 0) adView.setHeadlineView(adView.findViewById(binder.getHeadlineViewId()));
+            if (binder.getBodyViewId() != 0) adView.setBodyView(adView.findViewById(binder.getBodyViewId()));
+            if (binder.getCallToActionViewId() != 0) adView.setCallToActionView(adView.findViewById(binder.getCallToActionViewId()));
+            if (binder.getIconViewId() != 0) adView.setIconView(adView.findViewById(binder.getIconViewId()));
+            if (binder.getStarRatingViewId() != 0) adView.setStarRatingView(adView.findViewById(binder.getStarRatingViewId()));
+            if (binder.getAdvertiserViewId() != 0) adView.setAdvertiserView(adView.findViewById(binder.getAdvertiserViewId()));
+            if (binder.getPriceViewId() != 0) adView.setPriceView(adView.findViewById(binder.getPriceViewId()));
+            if (binder.getStoreViewId() != 0) adView.setStoreView(adView.findViewById(binder.getStoreViewId()));
+        } else {
+            adView.setMediaView(adView.findViewById(R.id.smartads_ad_media));
+            adView.setHeadlineView(adView.findViewById(R.id.smartads_ad_headline));
+            adView.setBodyView(adView.findViewById(R.id.smartads_ad_body));
+            adView.setCallToActionView(adView.findViewById(R.id.smartads_ad_call_to_action));
+            adView.setIconView(adView.findViewById(R.id.smartads_ad_app_icon));
+            adView.setStarRatingView(adView.findViewById(R.id.smartads_ad_stars));
+            adView.setAdvertiserView(adView.findViewById(R.id.smartads_ad_advertiser));
+        }
 
         // Headline
         if (adView.getHeadlineView() != null) {
@@ -296,6 +322,26 @@ public class NativeAdManager {
             } else {
                 ((TextView) adView.getAdvertiserView()).setText(nativeAd.getAdvertiser());
                 adView.getAdvertiserView().setVisibility(View.VISIBLE);
+            }
+        }
+
+        // Price
+        if (adView.getPriceView() != null) {
+            if (nativeAd.getPrice() == null) {
+                adView.getPriceView().setVisibility(View.INVISIBLE);
+            } else {
+                adView.getPriceView().setVisibility(View.VISIBLE);
+                ((TextView) adView.getPriceView()).setText(nativeAd.getPrice());
+            }
+        }
+
+        // Store
+        if (adView.getStoreView() != null) {
+            if (nativeAd.getStore() == null) {
+                adView.getStoreView().setVisibility(View.INVISIBLE);
+            } else {
+                adView.getStoreView().setVisibility(View.VISIBLE);
+                ((TextView) adView.getStoreView()).setText(nativeAd.getStore());
             }
         }
 

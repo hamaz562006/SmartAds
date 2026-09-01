@@ -35,6 +35,12 @@ android {
         warningsAsErrors = false
     }
 
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -51,6 +57,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-process:2.10.0")
     implementation("androidx.annotation:annotation:1.9.1")
     implementation("com.google.android.material:material:1.13.0")
+    testImplementation("junit:junit:4.13.2")
 }
 
 // ✅ Important: wrap publishing block inside afterEvaluate

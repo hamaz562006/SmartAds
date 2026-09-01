@@ -11,11 +11,41 @@ public final class SmartAdsLogger {
         void onLog(String message);
     }
 
+    private static volatile boolean loggingOverride = false;
+    private static volatile boolean hasOverride = false;
     private static volatile LogListener logListener;
-    private static final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private static Handler mainHandler;
+
+    static {
+        try {
+            if (Looper.getMainLooper() != null) {
+                mainHandler = new Handler(Looper.getMainLooper());
+            }
+        } catch (Throwable ignored) {
+            mainHandler = null;
+        }
+    }
 
     private SmartAdsLogger() {
         // Utility class
+    }
+
+    public static void setLoggingEnabled(boolean enabled) {
+        loggingOverride = enabled;
+        hasOverride = true;
+    }
+
+    public static boolean isLoggingEnabled() {
+        if (hasOverride) {
+            return loggingOverride;
+        }
+        try {
+            if (SmartAds.isInitialized() && SmartAds.getInstance().getConfig() != null) {
+                return SmartAds.getInstance().getConfig().isLoggingEnabled();
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
     }
 
     public static void setLogListener(LogListener listener) {
@@ -24,8 +54,7 @@ public final class SmartAdsLogger {
 
     public static void d(String message) {
         try {
-            if (SmartAds.isInitialized() && SmartAds.getInstance().getConfig() != null
-                    && SmartAds.getInstance().getConfig().isLoggingEnabled()) {
+            if (isLoggingEnabled()) {
                 Log.d(TAG, message);
             }
         } catch (Exception ignored) {
@@ -46,15 +75,19 @@ public final class SmartAdsLogger {
     private static void dispatchLog(String message) {
         LogListener listener = logListener;
         if (listener != null) {
-            if (Looper.myLooper() == Looper.getMainLooper()) {
+            try {
+                if (Looper.myLooper() == Looper.getMainLooper() || mainHandler == null) {
+                    listener.onLog(message);
+                } else {
+                    mainHandler.post(() -> {
+                        LogListener l = logListener;
+                        if (l != null) {
+                            l.onLog(message);
+                        }
+                    });
+                }
+            } catch (Throwable t) {
                 listener.onLog(message);
-            } else {
-                mainHandler.post(() -> {
-                    LogListener l = logListener;
-                    if (l != null) {
-                        l.onLog(message);
-                    }
-                });
             }
         }
     }

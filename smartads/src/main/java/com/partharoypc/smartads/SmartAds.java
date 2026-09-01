@@ -16,6 +16,7 @@ import com.google.android.gms.ads.RequestConfiguration;
 import com.google.android.ump.ConsentInformation;
 import com.google.android.ump.ConsentRequestParameters;
 import com.google.android.ump.UserMessagingPlatform;
+import com.partharoypc.smartads.analytics.SmartAdsAdjustAdapter;
 import com.partharoypc.smartads.analytics.SmartAdsAnalyticsListener;
 import com.partharoypc.smartads.listeners.AppOpenAdListener;
 import com.partharoypc.smartads.listeners.BannerAdListener;
@@ -23,12 +24,15 @@ import com.partharoypc.smartads.listeners.InterstitialAdListener;
 import com.partharoypc.smartads.listeners.NativeAdListener;
 import com.partharoypc.smartads.listeners.RewardedAdListener;
 import com.partharoypc.smartads.listeners.RewardedInterstitialAdListener;
+import com.partharoypc.smartads.managers.AdFrequencyManager;
 import com.partharoypc.smartads.managers.AppOpenAdManager;
 import com.partharoypc.smartads.managers.BannerAdManager;
 import com.partharoypc.smartads.managers.InterstitialAdManager;
 import com.partharoypc.smartads.managers.NativeAdManager;
 import com.partharoypc.smartads.managers.RewardedAdManager;
 import com.partharoypc.smartads.managers.RewardedInterstitialAdManager;
+import com.partharoypc.smartads.ui.NativeAdBinder;
+import com.partharoypc.smartads.utils.SmartAdsPreloadHelper;
 
 public class SmartAds {
 
@@ -44,6 +48,7 @@ public class SmartAds {
     private NativeAdManager nativeAdManager;
 
     private SmartAdsAnalyticsListener analyticsListener;
+    private SmartAdsAdjustAdapter adjustAdapter;
 
     private Application application;
 
@@ -208,7 +213,12 @@ public class SmartAds {
 
                     MobileAds.setRequestConfiguration(rcBuilder.build());
 
+                    SmartAdsLogger.setLoggingEnabled(config.isLoggingEnabled() || config.isTestMode());
+
                     instance.initializeManagersIfNeeded(application);
+
+                    // Register lifecycle-based screen preloader
+                    SmartAdsPreloadHelper.register(application, config);
 
                     // UMP Consent (optional)
                     if (config.useUmpConsent()) {
@@ -414,15 +424,22 @@ public class SmartAds {
     }
 
     /**
+     * Sets the Adjust SDK ILAR adapter.
+     */
+    public void setAdjustAdapter(SmartAdsAdjustAdapter adapter) {
+        this.adjustAdapter = adapter;
+    }
+
+    /**
      * Internal method used by Ad Managers to report revenue.
      */
     public void reportPaidEvent(com.google.android.gms.ads.AdValue adValue,
             com.google.android.gms.ads.ResponseInfo responseInfo,
             String adUnitId,
             String adFormat) {
-        if (analyticsListener != null) {
-            String networkName = "Google AdMob";
+        String networkName = "Google AdMob";
 
+        if (analyticsListener != null) {
             analyticsListener.onAdRevenuePaid(
                     adUnitId,
                     adFormat,
@@ -431,12 +448,22 @@ public class SmartAds {
                     adValue.getCurrencyCode(),
                     adValue.getPrecisionType(),
                     null);
-
-            SmartAdsLogger.d("💰 Paid Event: " +
-                    adValue.getValueMicros() + " " + adValue.getCurrencyCode() +
-                    " | Network: " + networkName +
-                    " | Format: " + adFormat);
         }
+
+        if (adjustAdapter != null) {
+            adjustAdapter.trackAdRevenue(
+                    adUnitId,
+                    adFormat,
+                    networkName,
+                    adValue.getValueMicros(),
+                    adValue.getCurrencyCode(),
+                    adValue.getPrecisionType());
+        }
+
+        SmartAdsLogger.d("💰 Paid Event: " +
+                adValue.getValueMicros() + " " + adValue.getCurrencyCode() +
+                " | Network: " + networkName +
+                " | Format: " + adFormat);
     }
 
     public void updateConfig(SmartAdsConfig newConfig) {
@@ -449,8 +476,48 @@ public class SmartAds {
         return config;
     }
 
+    /**
+     * Checks if the user is premium.
+     */
+    public boolean isPremium() {
+        return config != null && config.isPremium();
+    }
+
+    /**
+     * Sets user premium status (blocks all ads when true).
+     */
+    public void setPremium(boolean isPremium) {
+        if (this.config != null) {
+            this.config = this.config.toBuilder().setPremium(isPremium).build();
+        }
+        SmartAdsLogger.d("User premium status set to: " + isPremium);
+    }
+
+    /**
+     * Checks whether any ad can currently be shown (must not be premium, must have adsEnabled = true and ad IDs).
+     */
     public boolean canShowAds() {
+        if (isPremium()) {
+            return false;
+        }
         return this.adsEnabled && config != null && config.isAnyAdConfigured();
+    }
+
+    /**
+     * Checks if an Interstitial ad is permitted to show based on time-based frequency capping and cooldown after rewarded ads.
+     */
+    public boolean canShowInterstitial() {
+        long ivInterval = config != null ? config.getInterstitialIntervalSeconds() : 30L;
+        long rvDelay = config != null ? config.getDelayAfterRewardedSeconds() : 30L;
+        return AdFrequencyManager.getInstance().canShowInterstitial(ivInterval, rvDelay);
+    }
+
+    /**
+     * Checks if an App Open ad is permitted to show based on time-based frequency capping.
+     */
+    public boolean canShowAppOpen() {
+        long aoInterval = config != null ? config.getAppOpenIntervalSeconds() : 15L;
+        return AdFrequencyManager.getInstance().canShowAppOpen(aoInterval);
     }
 
     // --- Interstitial Ads ---
@@ -622,6 +689,24 @@ public class SmartAds {
             NativeAdListener listener) {
         if (canShowAds() && config.isNativeConfigured() && config.isNativeEnabled()) {
             nativeAdManager.loadAndShowAd(activity, adContainer, layoutRes, config, listener);
+        } else {
+            if (listener != null)
+                listener.onAdFailed("Ad condition not met or Native ads disabled.");
+        }
+    }
+
+    /**
+     * Loads and shows a Native Ad using a custom NativeAdBinder for layout and view IDs mapping.
+     *
+     * @param activity    Current activity.
+     * @param adContainer FrameLayout to hold the native ad.
+     * @param binder      NativeAdBinder configuration.
+     * @param listener    Callback listener.
+     */
+    public void showNativeAd(Activity activity, FrameLayout adContainer, NativeAdBinder binder,
+            NativeAdListener listener) {
+        if (canShowAds() && config.isNativeConfigured() && config.isNativeEnabled()) {
+            nativeAdManager.loadAndShowAd(activity, adContainer, binder, config, listener);
         } else {
             if (listener != null)
                 listener.onAdFailed("Ad condition not met or Native ads disabled.");

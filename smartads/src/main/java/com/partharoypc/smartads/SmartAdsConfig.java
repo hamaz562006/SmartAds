@@ -17,6 +17,7 @@ public class SmartAdsConfig {
 
     // Flags
     private final boolean adsEnabled;
+    private final boolean isPremium;
     private final boolean isTestMode;
     private final boolean isLoggingEnabled;
     private final boolean collapsibleBannerEnabled;
@@ -39,6 +40,9 @@ public class SmartAdsConfig {
     private final int tagForChildDirectedTreatment;
     private final int tagForUnderAgeOfConsent;
     private final long frequencyCapSeconds;
+    private final long interstitialIntervalSeconds;
+    private final long delayAfterRewardedSeconds;
+    private final long appOpenIntervalSeconds;
 
     // UI Customization
     private final Integer dialogBackgroundColor;
@@ -48,9 +52,10 @@ public class SmartAdsConfig {
     private final String dialogText;
     private final String dialogSubText;
 
-    // Testing & House Ads
+    // Testing & House Ads & Preload
     private final List<String> testDeviceIds;
     private final List<HouseAd> houseAds;
+    private final java.util.Map<String, String> screenPreloadRules;
 
     public Builder toBuilder() {
         return new Builder(this);
@@ -65,6 +70,7 @@ public class SmartAdsConfig {
         this.adMobNativeId = builder.adMobNativeId;
 
         this.adsEnabled = builder.adsEnabled;
+        this.isPremium = builder.isPremium;
         this.isTestMode = builder.isTestMode;
         this.isLoggingEnabled = builder.isLoggingEnabled;
         this.collapsibleBannerEnabled = builder.collapsibleBannerEnabled;
@@ -85,6 +91,9 @@ public class SmartAdsConfig {
         this.tagForChildDirectedTreatment = builder.tagForChildDirectedTreatment;
         this.tagForUnderAgeOfConsent = builder.tagForUnderAgeOfConsent;
         this.frequencyCapSeconds = builder.frequencyCapSeconds;
+        this.interstitialIntervalSeconds = builder.interstitialIntervalSeconds;
+        this.delayAfterRewardedSeconds = builder.delayAfterRewardedSeconds;
+        this.appOpenIntervalSeconds = builder.appOpenIntervalSeconds;
 
         this.dialogBackgroundColor = builder.dialogBackgroundColor;
         this.dialogTextColor = builder.dialogTextColor;
@@ -95,6 +104,7 @@ public class SmartAdsConfig {
 
         this.testDeviceIds = List.copyOf(builder.testDeviceIds);
         this.houseAds = List.copyOf(builder.houseAds);
+        this.screenPreloadRules = java.util.Collections.unmodifiableMap(new java.util.HashMap<>(builder.screenPreloadRules));
     }
 
     // =============================================================================================
@@ -127,6 +137,10 @@ public class SmartAdsConfig {
 
     public boolean isAdsEnabled() {
         return adsEnabled;
+    }
+
+    public boolean isPremium() {
+        return isPremium;
     }
 
     public boolean isTestMode() {
@@ -199,6 +213,22 @@ public class SmartAdsConfig {
 
     public long getFrequencyCapSeconds() {
         return frequencyCapSeconds;
+    }
+
+    public long getInterstitialIntervalSeconds() {
+        return interstitialIntervalSeconds;
+    }
+
+    public long getDelayAfterRewardedSeconds() {
+        return delayAfterRewardedSeconds;
+    }
+
+    public long getAppOpenIntervalSeconds() {
+        return appOpenIntervalSeconds;
+    }
+
+    public java.util.Map<String, String> getScreenPreloadRules() {
+        return screenPreloadRules;
     }
 
     public Integer getDialogBackgroundColor() {
@@ -281,6 +311,7 @@ public class SmartAdsConfig {
 
         // Flags (All Defaulted to FALSE)
         private boolean adsEnabled = false;
+        private boolean isPremium = false;
         private boolean isTestMode = false;
         private boolean isLoggingEnabled = false;
         private boolean collapsibleBannerEnabled = false;
@@ -306,6 +337,9 @@ public class SmartAdsConfig {
 
         // Limits
         private long frequencyCapSeconds = 30;
+        private long interstitialIntervalSeconds = 30;
+        private long delayAfterRewardedSeconds = 30;
+        private long appOpenIntervalSeconds = 15;
 
         // UI
         private Integer dialogBackgroundColor = null;
@@ -318,6 +352,7 @@ public class SmartAdsConfig {
         // Lists
         private final List<String> testDeviceIds = new ArrayList<>();
         private List<HouseAd> houseAds = new ArrayList<>();
+        private final java.util.Map<String, String> screenPreloadRules = new java.util.HashMap<>();
 
         public Builder() {
         }
@@ -334,6 +369,7 @@ public class SmartAdsConfig {
             this.adMobNativeId = config.adMobNativeId;
 
             this.adsEnabled = config.adsEnabled;
+            this.isPremium = config.isPremium;
             this.isTestMode = config.isTestMode;
             this.isLoggingEnabled = config.isLoggingEnabled;
             this.collapsibleBannerEnabled = config.collapsibleBannerEnabled;
@@ -354,6 +390,9 @@ public class SmartAdsConfig {
             this.tagForChildDirectedTreatment = config.tagForChildDirectedTreatment;
             this.tagForUnderAgeOfConsent = config.tagForUnderAgeOfConsent;
             this.frequencyCapSeconds = config.frequencyCapSeconds;
+            this.interstitialIntervalSeconds = config.interstitialIntervalSeconds;
+            this.delayAfterRewardedSeconds = config.delayAfterRewardedSeconds;
+            this.appOpenIntervalSeconds = config.appOpenIntervalSeconds;
 
             this.dialogBackgroundColor = config.dialogBackgroundColor;
             this.dialogTextColor = config.dialogTextColor;
@@ -364,6 +403,7 @@ public class SmartAdsConfig {
 
             this.testDeviceIds.addAll(config.testDeviceIds);
             this.houseAds.addAll(config.houseAds);
+            this.screenPreloadRules.putAll(config.screenPreloadRules);
         }
 
         // --- Ad Unit IDs ---
@@ -423,6 +463,14 @@ public class SmartAdsConfig {
          */
         public Builder setAdsEnabled(boolean enabled) {
             this.adsEnabled = enabled;
+            return this;
+        }
+
+        /**
+         * Sets whether the current user is premium/paid (blocks all ads when true). Default: false
+         */
+        public Builder setPremium(boolean isPremium) {
+            this.isPremium = isPremium;
             return this;
         }
 
@@ -570,6 +618,51 @@ public class SmartAdsConfig {
          */
         public Builder setFrequencyCapSeconds(long seconds) {
             this.frequencyCapSeconds = seconds;
+            return this;
+        }
+
+        /**
+         * Sets minimum time interval between consecutive Interstitial ads in seconds. Default: 30s
+         */
+        public Builder setInterstitialIntervalSeconds(long seconds) {
+            this.interstitialIntervalSeconds = seconds;
+            return this;
+        }
+
+        /**
+         * Sets minimum cooldown delay after watching a Rewarded ad before an Interstitial can show in seconds. Default: 30s
+         */
+        public Builder setDelayAfterRewardedSeconds(long seconds) {
+            this.delayAfterRewardedSeconds = seconds;
+            return this;
+        }
+
+        /**
+         * Sets minimum time interval between consecutive App Open ads in seconds. Default: 15s
+         */
+        public Builder setAppOpenIntervalSeconds(long seconds) {
+            this.appOpenIntervalSeconds = seconds;
+            return this;
+        }
+
+        /**
+         * Sets screen preload mapping rules (screenName -> comma-separated formats e.g. "INTERSTITIAL,REWARDED").
+         */
+        public Builder setScreenPreloadRules(java.util.Map<String, String> rules) {
+            this.screenPreloadRules.clear();
+            if (rules != null) {
+                this.screenPreloadRules.putAll(rules);
+            }
+            return this;
+        }
+
+        /**
+         * Adds a single screen preload rule.
+         */
+        public Builder addScreenPreloadRule(String screenName, String formats) {
+            if (screenName != null && formats != null) {
+                this.screenPreloadRules.put(screenName, formats);
+            }
             return this;
         }
 

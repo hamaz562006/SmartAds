@@ -15,6 +15,7 @@ import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.appopen.AppOpenAd;
 import com.partharoypc.smartads.AdStatus;
 import com.partharoypc.smartads.SmartAds;
+import com.partharoypc.smartads.SmartAdsConfig;
 import com.partharoypc.smartads.SmartAdsLogger;
 import com.partharoypc.smartads.TestAdIds;
 import com.partharoypc.smartads.house.HouseAd;
@@ -225,7 +226,13 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
             return;
         }
 
-        if (isFrequencyCapped(SmartAds.getInstance().getConfig())) {
+        SmartAdsConfig config = SmartAds.getInstance().getConfig();
+        if (config == null || !config.isAppOpenEnabled()) {
+            return;
+        }
+        long aoInterval = config.getAppOpenIntervalSeconds();
+
+        if (!AdFrequencyManager.getInstance().canShowAppOpen(aoInterval) || isFrequencyCapped(config)) {
             SmartAdsLogger.d("App Open Ad Frequency Capped. Skipping.");
             return;
         }
@@ -267,6 +274,7 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
                 isShowingAd = true;
                 adStatus = AdStatus.SHOWN;
                 lastShownTime = System.currentTimeMillis();
+                AdFrequencyManager.getInstance().recordAppOpenShown();
             }
 
             @Override
@@ -321,6 +329,7 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
                         adStatus = AdStatus.SHOWN;
                         isShowingAd = true;
                         lastShownTime = System.currentTimeMillis();
+                        AdFrequencyManager.getInstance().recordAppOpenShown();
                         if (developerListener != null)
                             developerListener.onAdImpression();
                     }
