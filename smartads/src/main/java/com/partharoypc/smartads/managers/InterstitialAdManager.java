@@ -217,7 +217,19 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
         long rvDelay = config != null ? config.getDelayAfterRewardedSeconds() : 30L;
 
         if (!AdFrequencyManager.getInstance().canShowInterstitial(ivInterval, rvDelay) || isFrequencyCapped(config)) {
-            SmartAdsLogger.d("Ad Frequency Capped (time-based interval). Skipping.");
+            SmartAdsLogger.d("Ad Frequency Capped (time-based interval). Checking House Ad fallback...");
+            if (config != null && config.isHouseAdsEnabled() && !config.getHouseAds().isEmpty()) {
+                if (isHouseAdReady && selectedHouseAd != null) {
+                    SmartAdsLogger.d("Showing ready House Interstitial due to frequency cap.");
+                    showHouseInterstitial(activity);
+                    return;
+                } else if (loadHouseAd(activity, config)) {
+                    SmartAdsLogger.d("Showing newly loaded House Interstitial due to frequency cap.");
+                    showHouseInterstitial(activity);
+                    return;
+                }
+            }
+            SmartAdsLogger.d("Ad Frequency Capped and no House Ad available. Skipping.");
             if (listener != null)
                 listener.onAdFailedToShow("Ad is frequency capped.");
             return;

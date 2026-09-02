@@ -233,7 +233,27 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
         long aoInterval = config.getAppOpenIntervalSeconds();
 
         if (!AdFrequencyManager.getInstance().canShowAppOpen(aoInterval) || isFrequencyCapped(config)) {
-            SmartAdsLogger.d("App Open Ad Frequency Capped. Skipping.");
+            SmartAdsLogger.d("App Open Ad Frequency Capped. Checking House Ad fallback...");
+            if (config.isHouseAdsEnabled() && !config.getHouseAds().isEmpty()) {
+                if (!isShowingAd && !(currentActivity instanceof HouseInterstitialActivity) && !disabledActivities.contains(currentActivity.getClass())) {
+                    if (isHouseAdReady && selectedHouseAd != null) {
+                        SmartAdsLogger.d("Showing ready House App Open Ad due to frequency cap.");
+                        showHouseAppOpen();
+                        return;
+                    } else {
+                        List<HouseAd> houseAds = config.getHouseAds();
+                        selectedHouseAd = HouseAdLoader.selectAd(houseAds);
+                        if (selectedHouseAd != null) {
+                            selectedHouseAdIndex = houseAds.indexOf(selectedHouseAd);
+                            isHouseAdReady = true;
+                            SmartAdsLogger.d("Showing newly loaded House App Open Ad due to frequency cap.");
+                            showHouseAppOpen();
+                            return;
+                        }
+                    }
+                }
+            }
+            SmartAdsLogger.d("App Open Ad Frequency Capped and no House Ad available. Skipping.");
             return;
         }
 

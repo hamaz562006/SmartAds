@@ -174,7 +174,20 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
         }
 
         if (isFrequencyCapped(com.partharoypc.smartads.SmartAds.getInstance().getConfig())) {
-            com.partharoypc.smartads.SmartAdsLogger.d("Rewarded Ad Frequency Capped. Skipping.");
+            SmartAdsConfig config = com.partharoypc.smartads.SmartAds.getInstance().getConfig();
+            com.partharoypc.smartads.SmartAdsLogger.d("Rewarded Ad Frequency Capped. Checking House Ad fallback...");
+            if (config != null && config.isHouseAdsEnabled() && !config.getHouseAds().isEmpty()) {
+                if (isHouseAdReady && selectedHouseAd != null) {
+                    com.partharoypc.smartads.SmartAdsLogger.d("Showing ready House Rewarded Ad due to frequency cap.");
+                    showHouseRewarded(activity);
+                    return;
+                } else if (loadHouseAd(activity, config)) {
+                    com.partharoypc.smartads.SmartAdsLogger.d("Showing newly loaded House Rewarded Ad due to frequency cap.");
+                    showHouseRewarded(activity);
+                    return;
+                }
+            }
+            com.partharoypc.smartads.SmartAdsLogger.d("Rewarded Ad Frequency Capped and no House Ad available. Skipping.");
             if (listener != null)
                 listener.onAdFailedToShow("Ad is frequency capped.");
             return;

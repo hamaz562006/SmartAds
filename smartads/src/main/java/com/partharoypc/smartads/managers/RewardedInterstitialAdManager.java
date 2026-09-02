@@ -172,7 +172,20 @@ public class RewardedInterstitialAdManager extends BaseFullScreenAdManager {
         }
 
         if (isFrequencyCapped(SmartAds.getInstance().getConfig())) {
-            SmartAdsLogger.d("Rewarded Interstitial Ad frequency capped. Skipping show.");
+            SmartAdsConfig config = SmartAds.getInstance().getConfig();
+            SmartAdsLogger.d("Rewarded Interstitial Ad frequency capped. Checking House Ad fallback...");
+            if (config != null && config.isHouseAdsEnabled() && !config.getHouseAds().isEmpty()) {
+                if (isHouseAdReady && selectedHouseAd != null) {
+                    SmartAdsLogger.d("Showing ready House Rewarded Interstitial Ad due to frequency cap.");
+                    showHouseRewardedInterstitial(activity);
+                    return;
+                } else if (loadHouseAd(activity, config)) {
+                    SmartAdsLogger.d("Showing newly loaded House Rewarded Interstitial Ad due to frequency cap.");
+                    showHouseRewardedInterstitial(activity);
+                    return;
+                }
+            }
+            SmartAdsLogger.d("Rewarded Interstitial Ad frequency capped and no House Ad available. Skipping show.");
             if (listener != null)
                 listener.onAdFailedToShow("Frequency Capped");
             return;
