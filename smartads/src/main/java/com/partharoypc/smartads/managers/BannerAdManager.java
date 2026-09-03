@@ -23,6 +23,7 @@ import com.partharoypc.smartads.SmartAdsLogger;
 import com.partharoypc.smartads.house.HouseAd;
 import com.partharoypc.smartads.house.HouseAdLoader;
 import com.partharoypc.smartads.listeners.BannerAdListener;
+import com.partharoypc.smartads.analytics.SmartAdsLifecycleListener;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -129,6 +130,10 @@ public class BannerAdManager {
         }
 
         SmartAdsLogger.d("Loading Banner Ad...");
+        SmartAdsLifecycleListener llInit = SmartAds.getInstance().getLifecycleListener();
+        if (llInit != null) {
+            llInit.onAdLoadStarted("Banner", "ADMOB");
+        }
 
         AdView admobBanner = new AdView(activity);
         float density = activity.getResources().getDisplayMetrics().density;
@@ -143,6 +148,10 @@ public class BannerAdManager {
             @Override
             public void onAdLoaded() {
                 SmartAdsLogger.d("✅ Banner Ad LOADED.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdLoadSuccess("Banner", "ADMOB");
+                }
                 if (!isContainerActive(adContainer) || activity.isFinishing() || activity.isDestroyed()) {
                     try {
                         admobBanner.destroy();
@@ -159,6 +168,10 @@ public class BannerAdManager {
             @Override
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 SmartAdsLogger.e("❌ Banner Ad Failed to Load: " + loadAdError.getMessage());
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdLoadFailed("Banner", "ADMOB", loadAdError.getMessage());
+                }
                 if (loadAdError.getCode() == com.google.android.gms.ads.AdRequest.ERROR_CODE_NO_FILL) {
                     com.partharoypc.smartads.utils.AdMobRateLimiter.recordNoFill(adUnitId);
                 }
@@ -175,13 +188,30 @@ public class BannerAdManager {
             @Override
             public void onAdOpened() {
                 SmartAdsLogger.d("Banner Ad Clicked/Opened.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdClicked("Banner", "ADMOB");
+                }
                 if (listener != null)
                     listener.onAdClicked();
             }
 
             @Override
+            public void onAdClosed() {
+                SmartAdsLogger.d("Banner Ad Closed.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdClosed("Banner", "ADMOB");
+                }
+            }
+
+            @Override
             public void onAdImpression() {
                 SmartAdsLogger.d("Banner Ad Impression.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdShowSuccess("Banner", "ADMOB");
+                }
                 if (listener != null)
                     listener.onAdImpression();
             }
@@ -201,15 +231,25 @@ public class BannerAdManager {
 
     private void loadHouseBanner(Activity activity, FrameLayout adContainer, SmartAdsConfig config,
             BannerAdListener listener) {
+        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+        if (ll != null) {
+            ll.onAdLoadStarted("Banner", "HOUSE");
+        }
         HouseAd houseAd = HouseAdLoader.selectAd(config.getHouseAds());
         if (houseAd == null) {
             SmartAdsLogger.e("No House Banner Ad available.");
+            if (ll != null) {
+                ll.onAdLoadFailed("Banner", "HOUSE", "No House Ads available.");
+            }
             if (listener != null)
                 listener.onAdFailed("No House Ads available.");
             return;
         }
 
         SmartAdsLogger.d("Showing House Banner Ad.");
+        if (ll != null) {
+            ll.onAdLoadSuccess("Banner", "HOUSE");
+        }
 
         View houseBannerView = android.view.LayoutInflater.from(activity)
                 .inflate(R.layout.smartads_layout_house_banner, adContainer, false);
@@ -227,12 +267,25 @@ public class BannerAdManager {
             imageView.setBackgroundColor(android.graphics.Color.LTGRAY);
         }
 
-        houseBannerView.setOnClickListener(v -> HouseAdLoader.handleClick(activity, houseAd));
+        houseBannerView.setOnClickListener(v -> {
+            SmartAdsLifecycleListener clickLl = SmartAds.getInstance().getLifecycleListener();
+            if (clickLl != null) {
+                clickLl.onAdClicked("Banner", "HOUSE");
+            }
+            if (listener != null) {
+                listener.onAdClicked();
+            }
+            HouseAdLoader.handleClick(activity, houseAd);
+        });
 
         adContainer.removeAllViews();
         adContainer.addView(houseBannerView);
 
+        if (ll != null) {
+            ll.onAdShowSuccess("Banner", "HOUSE");
+        }
         if (listener != null) {
+            listener.onAdImpression();
             listener.onAdLoaded(houseBannerView);
         }
     }

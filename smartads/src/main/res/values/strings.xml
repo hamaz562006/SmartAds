@@ -21,4 +21,9 @@
     <!-- House Ads Placeholders -->
     <string name="smartads_placeholder_title">App Title</string>
     <string name="smartads_placeholder_desc">Modern description goes here for this amazing application.</string>
+
+    <!-- Crash Handler -->
+    <string name="smartads_crash_title">متاسفانه مشکلی پیش آمد</string>
+    <string name="smartads_crash_message">یک خطای غیرمنتظره در برنامه رخ داد. برای ادامه لطفاً برنامه را ببندید و مجدداً باز کنید.</string>
+    <string name="smartads_crash_btn_close">بستن برنامه</string>
 </resources>

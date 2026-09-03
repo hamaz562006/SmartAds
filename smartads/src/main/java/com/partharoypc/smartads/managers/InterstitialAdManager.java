@@ -19,6 +19,7 @@ import com.partharoypc.smartads.house.HouseAd;
 import com.partharoypc.smartads.house.HouseAdLoader;
 import com.partharoypc.smartads.house.HouseInterstitialActivity;
 import com.partharoypc.smartads.listeners.InterstitialAdListener;
+import com.partharoypc.smartads.analytics.SmartAdsLifecycleListener;
 
 import java.util.List;
 
@@ -140,10 +141,18 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
         }
 
         AdRequest adRequest = new AdRequest.Builder().build();
+        SmartAdsLifecycleListener llInit = SmartAds.getInstance().getLifecycleListener();
+        if (llInit != null) {
+            llInit.onAdLoadStarted("Interstitial", "ADMOB");
+        }
         InterstitialAd.load(context, adUnitId, adRequest, new InterstitialAdLoadCallback() {
             @Override
             public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
                 SmartAdsLogger.d("✅ Interstitial Ad LOADED.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdLoadSuccess("Interstitial", "ADMOB");
+                }
                 admobInterstitial = interstitialAd;
                 interstitialAd.setOnPaidEventListener(adValue -> {
                     SmartAds.getInstance().reportPaidEvent(adValue, interstitialAd.getResponseInfo(), adUnitId,
@@ -156,6 +165,10 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
             @Override
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 SmartAdsLogger.e("❌ Interstitial Failed to Load: " + loadAdError.getMessage());
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdLoadFailed("Interstitial", "ADMOB", loadAdError.getMessage());
+                }
                 if (loadAdError.getCode() == com.google.android.gms.ads.AdRequest.ERROR_CODE_NO_FILL) {
                     com.partharoypc.smartads.utils.AdMobRateLimiter.recordNoFill(adUnitId);
                 }
@@ -182,14 +195,24 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
         if (!config.isHouseAdsEnabled()) {
             return false;
         }
+        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+        if (ll != null) {
+            ll.onAdLoadStarted("Interstitial", "HOUSE");
+        }
         List<HouseAd> houseAds = config.getHouseAds();
         selectedHouseAd = HouseAdLoader.selectAd(houseAds);
         if (selectedHouseAd != null) {
             selectedHouseAdIndex = houseAds.indexOf(selectedHouseAd);
             isHouseAdReady = true;
+            if (ll != null) {
+                ll.onAdLoadSuccess("Interstitial", "HOUSE");
+            }
             onAdLoadedBase();
             checkPendingShow();
             return true;
+        }
+        if (ll != null) {
+            ll.onAdLoadFailed("Interstitial", "HOUSE", "No House Ad selected.");
         }
         return false;
     }
@@ -285,6 +308,10 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
             @Override
             public void onAdDismissedFullScreenContent() {
                 SmartAdsLogger.d("Interstitial Dismissed.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdClosed("Interstitial", "ADMOB");
+                }
                 if (developerListener != null)
                     developerListener.onAdDismissed();
                 admobInterstitial = null;
@@ -297,6 +324,10 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
             @Override
             public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
                 SmartAdsLogger.e("Interstitial Failed to Show: " + adError.getMessage());
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdShowFailed("Interstitial", "ADMOB", adError.getMessage());
+                }
                 if (developerListener != null) {
                     developerListener.onAdFailedToShow(adError.getMessage());
                 }
@@ -312,6 +343,10 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
                 adStatus = AdStatus.SHOWN;
                 lastShownTime = System.currentTimeMillis();
                 AdFrequencyManager.getInstance().recordInterstitialShown();
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdShowSuccess("Interstitial", "ADMOB");
+                }
                 if (developerListener != null) {
                     developerListener.onAdImpression();
                 }
@@ -319,6 +354,10 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
 
             @Override
             public void onAdClicked() {
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdClicked("Interstitial", "ADMOB");
+                }
                 if (developerListener != null) {
                     developerListener.onAdClicked();
                 }
@@ -333,6 +372,10 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
                     @Override
                     public void onAdDismissed() {
                         SmartAdsLogger.d("House Interstitial Dismissed.");
+                        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                        if (ll != null) {
+                            ll.onAdClosed("Interstitial", "HOUSE");
+                        }
                         if (developerListener != null)
                             developerListener.onAdDismissed();
                         isHouseAdReady = false;
@@ -344,6 +387,10 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
 
                     @Override
                     public void onAdClicked() {
+                        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                        if (ll != null) {
+                            ll.onAdClicked("Interstitial", "HOUSE");
+                        }
                         if (developerListener != null)
                             developerListener.onAdClicked();
                     }
@@ -353,6 +400,10 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
                         adStatus = AdStatus.SHOWN;
                         lastShownTime = System.currentTimeMillis();
                         AdFrequencyManager.getInstance().recordInterstitialShown();
+                        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                        if (ll != null) {
+                            ll.onAdShowSuccess("Interstitial", "HOUSE");
+                        }
                         if (developerListener != null)
                             developerListener.onAdImpression();
                     }

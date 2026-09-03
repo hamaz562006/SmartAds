@@ -27,6 +27,7 @@ import com.partharoypc.smartads.house.HouseAd;
 import com.partharoypc.smartads.house.HouseAdLoader;
 import com.partharoypc.smartads.listeners.NativeAdListener;
 import com.partharoypc.smartads.ui.NativeAdBinder;
+import com.partharoypc.smartads.analytics.SmartAdsLifecycleListener;
 
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -152,10 +153,18 @@ public class NativeAdManager {
         }
 
         SmartAdsLogger.d("Loading Native Ad...");
+        SmartAdsLifecycleListener llInit = SmartAds.getInstance().getLifecycleListener();
+        if (llInit != null) {
+            llInit.onAdLoadStarted("Native", "ADMOB");
+        }
 
         AdLoader.Builder builder = new AdLoader.Builder(activity, adUnitId);
         builder.forNativeAd(nativeAd -> {
             SmartAdsLogger.d("✅ Native Ad LOADED.");
+            SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+            if (ll != null) {
+                ll.onAdLoadSuccess("Native", "ADMOB");
+            }
             nativeAd.setOnPaidEventListener(adValue -> {
                 SmartAds.getInstance().reportPaidEvent(adValue, nativeAd.getResponseInfo(), adUnitId, "Native");
             });
@@ -186,6 +195,10 @@ public class NativeAdManager {
             @Override
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 com.partharoypc.smartads.SmartAdsLogger.e("❌ Native Ad Failed to Load: " + loadAdError.getMessage());
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdLoadFailed("Native", "ADMOB", loadAdError.getMessage());
+                }
                 if (loadAdError.getCode() == com.google.android.gms.ads.AdRequest.ERROR_CODE_NO_FILL) {
                     com.partharoypc.smartads.utils.AdMobRateLimiter.recordNoFill(adUnitId);
                 }
@@ -202,6 +215,10 @@ public class NativeAdManager {
             @Override
             public void onAdClicked() {
                 com.partharoypc.smartads.SmartAdsLogger.d("Native Ad Clicked.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdClicked("Native", "ADMOB");
+                }
                 if (listener != null)
                     listener.onAdClicked();
             }
@@ -209,6 +226,10 @@ public class NativeAdManager {
             @Override
             public void onAdImpression() {
                 com.partharoypc.smartads.SmartAdsLogger.d("Native Ad Impression.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdShowSuccess("Native", "ADMOB");
+                }
                 if (listener != null)
                     listener.onAdImpression();
             }
@@ -235,15 +256,26 @@ public class NativeAdManager {
     private void loadHouseNative(Activity activity, FrameLayout adContainer, @LayoutRes int layoutRes,
             SmartAdsConfig config,
             NativeAdListener listener) {
+        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+        if (ll != null) {
+            ll.onAdLoadStarted("Native", "HOUSE");
+        }
         HouseAd houseAd = HouseAdLoader.selectAd(config.getHouseAds());
         if (houseAd == null) {
             com.partharoypc.smartads.SmartAdsLogger.e("No House Native Ad available.");
+            if (ll != null) {
+                ll.onAdLoadFailed("Native", "HOUSE", "No House Ads available.");
+            }
             if (listener != null)
                 listener.onAdFailed("No House Ads available.");
             return;
         }
 
         com.partharoypc.smartads.SmartAdsLogger.d("Showing House Native Ad.");
+        if (ll != null) {
+            ll.onAdLoadSuccess("Native", "HOUSE");
+            ll.onAdShowSuccess("Native", "HOUSE");
+        }
 
         // Inflate the same layout. Even if root is NativeAdView, we treat it as View.
         View adView = LayoutInflater.from(activity).inflate(layoutRes, adContainer, false);
@@ -368,6 +400,10 @@ public class NativeAdManager {
             NativeAd ad = activeAds.remove(adContainer);
             if (ad != null) {
                 ad.destroy();
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdClosed("Native", "ADMOB");
+                }
             }
         } catch (Exception ignored) {
         }

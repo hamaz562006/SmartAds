@@ -22,6 +22,7 @@ import com.partharoypc.smartads.house.HouseAd;
 import com.partharoypc.smartads.house.HouseAdLoader;
 import com.partharoypc.smartads.house.HouseInterstitialActivity;
 import com.partharoypc.smartads.listeners.AppOpenAdListener;
+import com.partharoypc.smartads.analytics.SmartAdsLifecycleListener;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -112,6 +113,10 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
 
         if (SmartAds.getInstance().getConfig().getAppOpenSource() == com.partharoypc.smartads.AdSource.HOUSE) {
             SmartAdsLogger.d("App Open source set to HOUSE. Loading House Ad directly.");
+            SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+            if (ll != null) {
+                ll.onAdLoadStarted("AppOpen", "HOUSE");
+            }
             isLoading = true;
             adStatus = AdStatus.LOADING;
             isHouseAdReady = false;
@@ -122,9 +127,15 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
                 if (selectedHouseAd != null) {
                     selectedHouseAdIndex = houseAds.indexOf(selectedHouseAd);
                     isHouseAdReady = true;
+                    if (ll != null) {
+                        ll.onAdLoadSuccess("AppOpen", "HOUSE");
+                    }
                     onAdLoadedBase();
                     return;
                 }
+            }
+            if (ll != null) {
+                ll.onAdLoadFailed("AppOpen", "HOUSE", "No House Ad available.");
             }
             isLoading = false;
             adStatus = AdStatus.FAILED;
@@ -139,13 +150,23 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
         if (adUnitId == null || adUnitId.isEmpty()) {
             if (SmartAds.getInstance().getConfig().isHouseAdsAutoFallback() && SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
                 SmartAdsLogger.d("AdMob App Open ID not set. Trying House Ad.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdLoadStarted("AppOpen", "HOUSE");
+                }
                 List<HouseAd> houseAds = SmartAds.getInstance().getConfig().getHouseAds();
                 selectedHouseAd = HouseAdLoader.selectAd(houseAds);
                 if (selectedHouseAd != null) {
                     selectedHouseAdIndex = houseAds.indexOf(selectedHouseAd);
                     isHouseAdReady = true;
+                    if (ll != null) {
+                        ll.onAdLoadSuccess("AppOpen", "HOUSE");
+                    }
                     onAdLoadedBase();
                     return;
+                }
+                if (ll != null) {
+                    ll.onAdLoadFailed("AppOpen", "HOUSE", "No House Ad available.");
                 }
             }
 
@@ -158,13 +179,23 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
         if (com.partharoypc.smartads.utils.AdMobRateLimiter.isRateLimited(adUnitId)) {
             SmartAdsLogger.d("AdMob Rate Limiter active (NO_FILL Cooldown). Skipping AdMob App Open Request.");
             if (SmartAds.getInstance().getConfig().isHouseAdsAutoFallback() && SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdLoadStarted("AppOpen", "HOUSE");
+                }
                 List<HouseAd> houseAds = SmartAds.getInstance().getConfig().getHouseAds();
                 selectedHouseAd = HouseAdLoader.selectAd(houseAds);
                 if (selectedHouseAd != null) {
                     selectedHouseAdIndex = houseAds.indexOf(selectedHouseAd);
                     isHouseAdReady = true;
+                    if (ll != null) {
+                        ll.onAdLoadSuccess("AppOpen", "HOUSE");
+                    }
                     onAdLoadedBase();
                     return;
+                }
+                if (ll != null) {
+                    ll.onAdLoadFailed("AppOpen", "HOUSE", "No House Ad available.");
                 }
             }
             isLoading = false;
@@ -178,11 +209,19 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
         selectedHouseAd = null;
 
         SmartAdsLogger.d("Fetching App Open Ad...");
+        SmartAdsLifecycleListener llInit = SmartAds.getInstance().getLifecycleListener();
+        if (llInit != null) {
+            llInit.onAdLoadStarted("AppOpen", "ADMOB");
+        }
 
         AppOpenAd.AppOpenAdLoadCallback loadCallback = new AppOpenAd.AppOpenAdLoadCallback() {
             @Override
             public void onAdLoaded(@NonNull AppOpenAd ad) {
                 SmartAdsLogger.d("✅ App Open Ad LOADED.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdLoadSuccess("AppOpen", "ADMOB");
+                }
                 AppOpenAdManager.this.appOpenAd = ad;
                 loadTimeMs = System.currentTimeMillis();
 
@@ -197,19 +236,32 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
             @Override
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 SmartAdsLogger.e("❌ App Open Ad Failed to Load: " + loadAdError.getMessage());
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdLoadFailed("AppOpen", "ADMOB", loadAdError.getMessage());
+                }
                 if (loadAdError.getCode() == com.google.android.gms.ads.AdRequest.ERROR_CODE_NO_FILL) {
                     com.partharoypc.smartads.utils.AdMobRateLimiter.recordNoFill(adUnitId);
                 }
                 // FALLBACK TO HOUSE AD
                 if (SmartAds.getInstance().getConfig().isHouseAdsAutoFallback() && SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
+                    if (ll != null) {
+                        ll.onAdLoadStarted("AppOpen", "HOUSE");
+                    }
                     List<HouseAd> houseAds = SmartAds.getInstance().getConfig().getHouseAds();
                     selectedHouseAd = HouseAdLoader.selectAd(houseAds);
                     if (selectedHouseAd != null) {
                         SmartAdsLogger.d("Fallback to House App Open Ad.");
                         selectedHouseAdIndex = houseAds.indexOf(selectedHouseAd);
                         isHouseAdReady = true;
+                        if (ll != null) {
+                            ll.onAdLoadSuccess("AppOpen", "HOUSE");
+                        }
                         onAdLoadedBase();
                         return;
+                    }
+                    if (ll != null) {
+                        ll.onAdLoadFailed("AppOpen", "HOUSE", "No House Ad available.");
                     }
                 }
 
@@ -305,6 +357,10 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
             @Override
             public void onAdDismissedFullScreenContent() {
                 SmartAdsLogger.d("App Open Ad Dismissed.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdClosed("AppOpen", "ADMOB");
+                }
                 AppOpenAdManager.this.appOpenAd = null;
                 isShowingAd = false;
                 fetchAd();
@@ -317,11 +373,19 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
                 adStatus = AdStatus.SHOWN;
                 lastShownTime = System.currentTimeMillis();
                 AdFrequencyManager.getInstance().recordAppOpenShown();
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdShowSuccess("AppOpen", "ADMOB");
+                }
             }
 
             @Override
             public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
                 SmartAdsLogger.e("App Open Ad Failed to Show: " + adError.getMessage());
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdShowFailed("AppOpen", "ADMOB", adError.getMessage());
+                }
                 AppOpenAdManager.this.appOpenAd = null;
                 isShowingAd = false;
                 fetchAd();
@@ -336,6 +400,10 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
 
             @Override
             public void onAdClicked() {
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdClicked("AppOpen", "ADMOB");
+                }
                 if (developerListener != null) {
                     developerListener.onAdClicked();
                 }
@@ -352,6 +420,10 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
                     @Override
                     public void onAdDismissed() {
                         SmartAdsLogger.d("House App Open Ad Dismissed.");
+                        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                        if (ll != null) {
+                            ll.onAdClosed("AppOpen", "HOUSE");
+                        }
                         isShowingAd = false;
                         isHouseAdReady = false;
                         selectedHouseAd = null;
@@ -362,6 +434,10 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
 
                     @Override
                     public void onAdClicked() {
+                        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                        if (ll != null) {
+                            ll.onAdClicked("AppOpen", "HOUSE");
+                        }
                         if (developerListener != null)
                             developerListener.onAdClicked();
                     }
@@ -372,6 +448,10 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
                         isShowingAd = true;
                         lastShownTime = System.currentTimeMillis();
                         AdFrequencyManager.getInstance().recordAppOpenShown();
+                        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                        if (ll != null) {
+                            ll.onAdShowSuccess("AppOpen", "HOUSE");
+                        }
                         if (developerListener != null)
                             developerListener.onAdImpression();
                     }

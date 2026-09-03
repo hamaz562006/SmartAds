@@ -1,7 +1,9 @@
 package com.partharoypc.smartads.managers;
 
+import android.content.Context;
 import com.partharoypc.smartads.SmartAdsConfig;
 import com.partharoypc.smartads.SmartAdsLogger;
+import com.partharoypc.smartads.utils.SmartAdsPreferencesHelper;
 
 /**
  * Manages time-based cross-format frequency capping for full-screen ads
@@ -14,6 +16,10 @@ import com.partharoypc.smartads.SmartAdsLogger;
  * 3. Minimum interval between consecutive App Open ads.
  */
 public class AdFrequencyManager {
+
+    public static final String KEY_LAST_INTERSTITIAL = "freq_last_iv";
+    public static final String KEY_LAST_REWARDED = "freq_last_rv";
+    public static final String KEY_LAST_APP_OPEN = "freq_last_ao";
 
     private static volatile AdFrequencyManager instance;
 
@@ -37,6 +43,28 @@ public class AdFrequencyManager {
             }
         }
         return instance;
+    }
+
+    /**
+     * Initializes timestamps from persisted preferences so frequency limits survive process death.
+     */
+    public void init(Context context) {
+        try {
+            SmartAdsPreferencesHelper prefs;
+            try {
+                prefs = SmartAdsPreferencesHelper.getInstance();
+            } catch (IllegalStateException e) {
+                SmartAdsPreferencesHelper.init(context);
+                prefs = SmartAdsPreferencesHelper.getInstance();
+            }
+            this.lastInterstitialShowTime = prefs.getLong(KEY_LAST_INTERSTITIAL, 0L);
+            this.lastRewardedShowTime = prefs.getLong(KEY_LAST_REWARDED, 0L);
+            this.lastAppOpenShowTime = prefs.getLong(KEY_LAST_APP_OPEN, 0L);
+            SmartAdsLogger.d("AdFrequencyManager initialized: IV=" + lastInterstitialShowTime
+                    + ", RV=" + lastRewardedShowTime + ", AO=" + lastAppOpenShowTime);
+        } catch (Exception e) {
+            SmartAdsLogger.e("Failed to initialize AdFrequencyManager from preferences: " + e.getMessage());
+        }
     }
 
     /**
@@ -128,6 +156,10 @@ public class AdFrequencyManager {
     public void recordInterstitialShown() {
         this.lastInterstitialShowTime = System.currentTimeMillis();
         SmartAdsLogger.d("Recorded Interstitial ad impression timestamp: " + lastInterstitialShowTime);
+        try {
+            SmartAdsPreferencesHelper.getInstance().saveLong(KEY_LAST_INTERSTITIAL, lastInterstitialShowTime);
+        } catch (Exception ignored) {
+        }
     }
 
     /**
@@ -136,6 +168,10 @@ public class AdFrequencyManager {
     public void recordRewardedShown() {
         this.lastRewardedShowTime = System.currentTimeMillis();
         SmartAdsLogger.d("Recorded Rewarded ad impression timestamp: " + lastRewardedShowTime);
+        try {
+            SmartAdsPreferencesHelper.getInstance().saveLong(KEY_LAST_REWARDED, lastRewardedShowTime);
+        } catch (Exception ignored) {
+        }
     }
 
     /**
@@ -144,6 +180,10 @@ public class AdFrequencyManager {
     public void recordAppOpenShown() {
         this.lastAppOpenShowTime = System.currentTimeMillis();
         SmartAdsLogger.d("Recorded App Open ad impression timestamp: " + lastAppOpenShowTime);
+        try {
+            SmartAdsPreferencesHelper.getInstance().saveLong(KEY_LAST_APP_OPEN, lastAppOpenShowTime);
+        } catch (Exception ignored) {
+        }
     }
 
     /**
@@ -153,6 +193,13 @@ public class AdFrequencyManager {
         lastInterstitialShowTime = 0L;
         lastRewardedShowTime = 0L;
         lastAppOpenShowTime = 0L;
+        try {
+            SmartAdsPreferencesHelper prefs = SmartAdsPreferencesHelper.getInstance();
+            prefs.saveLong(KEY_LAST_INTERSTITIAL, 0L);
+            prefs.saveLong(KEY_LAST_REWARDED, 0L);
+            prefs.saveLong(KEY_LAST_APP_OPEN, 0L);
+        } catch (Exception ignored) {
+        }
     }
 
     public long getLastInterstitialShowTime() {

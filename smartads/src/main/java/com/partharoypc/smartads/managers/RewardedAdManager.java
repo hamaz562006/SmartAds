@@ -18,6 +18,7 @@ import com.partharoypc.smartads.SmartAdsLogger;
 import com.partharoypc.smartads.house.HouseAd;
 import com.partharoypc.smartads.house.HouseAdLoader;
 import com.partharoypc.smartads.listeners.RewardedAdListener;
+import com.partharoypc.smartads.analytics.SmartAdsLifecycleListener;
 
 import java.util.List;
 
@@ -103,10 +104,18 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
         }
 
         AdRequest adRequest = new AdRequest.Builder().build();
+        SmartAdsLifecycleListener llInit = SmartAds.getInstance().getLifecycleListener();
+        if (llInit != null) {
+            llInit.onAdLoadStarted("Rewarded", "ADMOB");
+        }
         RewardedAd.load(context, adUnitId, adRequest, new RewardedAdLoadCallback() {
             @Override
             public void onAdLoaded(@NonNull RewardedAd rewardedAd) {
                 SmartAdsLogger.d("✅ Rewarded Ad LOADED.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdLoadSuccess("Rewarded", "ADMOB");
+                }
                 admobRewardedAd = rewardedAd;
                 rewardedAd.setOnPaidEventListener(adValue -> {
                     SmartAds.getInstance().reportPaidEvent(adValue, rewardedAd.getResponseInfo(), adUnitId, "Rewarded");
@@ -118,6 +127,10 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
             @Override
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 SmartAdsLogger.e("❌ Rewarded Ad Failed to Load: " + loadAdError.getMessage());
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdLoadFailed("Rewarded", "ADMOB", loadAdError.getMessage());
+                }
                 if (loadAdError.getCode() == com.google.android.gms.ads.AdRequest.ERROR_CODE_NO_FILL) {
                     com.partharoypc.smartads.utils.AdMobRateLimiter.recordNoFill(adUnitId);
                 }
@@ -143,14 +156,24 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
         if (!config.isHouseAdsEnabled()) {
             return false;
         }
+        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+        if (ll != null) {
+            ll.onAdLoadStarted("Rewarded", "HOUSE");
+        }
         List<HouseAd> houseAds = config.getHouseAds();
         selectedHouseAd = HouseAdLoader.selectAd(houseAds);
         if (selectedHouseAd != null) {
             selectedHouseAdIndex = houseAds.indexOf(selectedHouseAd);
             isHouseAdReady = true;
+            if (ll != null) {
+                ll.onAdLoadSuccess("Rewarded", "HOUSE");
+            }
             onAdLoadedBase();
             checkPendingShow();
             return true;
+        }
+        if (ll != null) {
+            ll.onAdLoadFailed("Rewarded", "HOUSE", "No House Ad selected.");
         }
         return false;
     }
@@ -245,6 +268,10 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
             @Override
             public void onAdDismissedFullScreenContent() {
                 com.partharoypc.smartads.SmartAdsLogger.d("Rewarded Ad Dismissed.");
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdClosed("Rewarded", "ADMOB");
+                }
                 if (developerListener != null)
                     developerListener.onAdDismissed();
                 admobRewardedAd = null;
@@ -257,6 +284,10 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
             @Override
             public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
                 com.partharoypc.smartads.SmartAdsLogger.e("Rewarded Ad Failed to Show: " + adError.getMessage());
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdShowFailed("Rewarded", "ADMOB", adError.getMessage());
+                }
                 if (developerListener != null) {
                     developerListener.onAdFailedToShow(adError.getMessage());
                 }
@@ -272,6 +303,10 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
                 adStatus = AdStatus.SHOWN;
                 lastShownTime = System.currentTimeMillis();
                 AdFrequencyManager.getInstance().recordRewardedShown();
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdShowSuccess("Rewarded", "ADMOB");
+                }
                 if (developerListener != null) {
                     developerListener.onAdImpression();
                 }
@@ -279,6 +314,10 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
 
             @Override
             public void onAdClicked() {
+                SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                if (ll != null) {
+                    ll.onAdClicked("Rewarded", "ADMOB");
+                }
                 if (developerListener != null) {
                     developerListener.onAdClicked();
                 }
@@ -299,6 +338,10 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
                     public void onAdDismissed() {
                         com.partharoypc.smartads.SmartAdsLogger
                                 .d("House Rewarded Ad Dismissed. Granting simulated reward.");
+                        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                        if (ll != null) {
+                            ll.onAdClosed("Rewarded", "HOUSE");
+                        }
                         // Grant reward on dismissal for House Ads (Simulated Reward)
                         if (developerListener != null) {
                             developerListener.onUserEarnedReward();
@@ -314,6 +357,10 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
 
                     @Override
                     public void onAdClicked() {
+                        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                        if (ll != null) {
+                            ll.onAdClicked("Rewarded", "HOUSE");
+                        }
                         if (developerListener != null)
                             developerListener.onAdClicked();
                     }
@@ -323,6 +370,10 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
                         adStatus = AdStatus.SHOWN;
                         lastShownTime = System.currentTimeMillis();
                         AdFrequencyManager.getInstance().recordRewardedShown();
+                        SmartAdsLifecycleListener ll = SmartAds.getInstance().getLifecycleListener();
+                        if (ll != null) {
+                            ll.onAdShowSuccess("Rewarded", "HOUSE");
+                        }
                         if (developerListener != null)
                             developerListener.onAdImpression();
                     }

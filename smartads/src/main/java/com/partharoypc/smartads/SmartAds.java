@@ -18,6 +18,7 @@ import com.google.android.ump.ConsentRequestParameters;
 import com.google.android.ump.UserMessagingPlatform;
 import com.partharoypc.smartads.analytics.SmartAdsAdjustAdapter;
 import com.partharoypc.smartads.analytics.SmartAdsAnalyticsListener;
+import com.partharoypc.smartads.analytics.SmartAdsLifecycleListener;
 import com.partharoypc.smartads.listeners.AppOpenAdListener;
 import com.partharoypc.smartads.listeners.BannerAdListener;
 import com.partharoypc.smartads.listeners.InterstitialAdListener;
@@ -32,6 +33,7 @@ import com.partharoypc.smartads.managers.NativeAdManager;
 import com.partharoypc.smartads.managers.RewardedAdManager;
 import com.partharoypc.smartads.managers.RewardedInterstitialAdManager;
 import com.partharoypc.smartads.ui.NativeAdBinder;
+import com.partharoypc.smartads.utils.SmartAdsPreferencesHelper;
 import com.partharoypc.smartads.utils.SmartAdsPreloadHelper;
 import com.partharoypc.smartads.utils.SmartAdsRemoteConfigMapper;
 import com.partharoypc.smartads.firebase.SmartAdsFirebaseRemoteConfigHelper;
@@ -57,6 +59,7 @@ public class SmartAds {
     private NativeAdManager nativeAdManager;
 
     private SmartAdsAnalyticsListener analyticsListener;
+    private SmartAdsLifecycleListener lifecycleListener;
     private SmartAdsAdjustAdapter adjustAdapter;
 
     private Application application;
@@ -201,6 +204,12 @@ public class SmartAds {
                     instance = new SmartAds();
                     instance.application = application;
                     instance.config = config;
+                    try {
+                        SmartAdsPreferencesHelper.getInstance();
+                    } catch (IllegalStateException e) {
+                        SmartAdsPreferencesHelper.init(application);
+                    }
+                    AdFrequencyManager.getInstance().init(application);
                     instance.adsEnabled = config.isAdsEnabled();
 
                     RequestConfiguration.Builder rcBuilder = new RequestConfiguration.Builder();
@@ -430,6 +439,32 @@ public class SmartAds {
      */
     public void setAnalyticsListener(SmartAdsAnalyticsListener listener) {
         this.analyticsListener = listener;
+    }
+
+    /**
+     * Sets the global ad lifecycle listener for granular load/show/click/close events.
+     *
+     * @param listener The lifecycle listener.
+     */
+    public void setLifecycleListener(SmartAdsLifecycleListener listener) {
+        this.lifecycleListener = listener;
+    }
+
+    /**
+     * Returns the global ad lifecycle listener.
+     */
+    public SmartAdsLifecycleListener getLifecycleListener() {
+        return lifecycleListener;
+    }
+
+    /**
+     * Enables the global uncaught crash handler.
+     * Optional and opt-in: app developers can call this to show a friendly crash screen.
+     *
+     * @param application Application instance.
+     */
+    public static void enableCrashHandler(Application application) {
+        com.partharoypc.smartads.ui.crash.SmartAdsCrashHandler.install(application);
     }
 
     /**

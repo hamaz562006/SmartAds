@@ -13,5 +13,11 @@
             android:name=".house.HouseInterstitialActivity"
             android:theme="@style/Theme.SmartAds.Fullscreen"
             android:configChanges="orientation|screenSize|keyboardHidden"/>
+
+        <activity
+            android:name=".ui.crash.SmartAdsCrashActivity"
+            android:process=":crash_process"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar" />
     </application>
 </manifest>
