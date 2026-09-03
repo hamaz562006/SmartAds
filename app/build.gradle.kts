@@ -1,6 +1,10 @@
 plugins {
     id("com.android.application")
-    id("com.google.gms.google-services")
+    id("com.google.gms.google-services") apply false
+}
+
+if (file("google-services.json").exists() || file("src/debug/google-services.json").exists() || file("src/release/google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
 }
 
 android {
