@@ -85,13 +85,23 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
         isHouseAdReady = false;
         selectedHouseAd = null;
         selectedHouseAdIndex = -1;
+
+        if (config.getInterstitialSource() == com.partharoypc.smartads.AdSource.HOUSE) {
+            SmartAdsLogger.d("Interstitial source set to HOUSE. Loading House Interstitial directly.");
+            if (!loadHouseAd(context, config)) {
+                adStatus = AdStatus.IDLE;
+                isLoading = false;
+            }
+            return;
+        }
+
         SmartAdsLogger.d("Loading Interstitial Ad...");
         loadAdMob(context, config);
     }
 
     private void loadAdMob(Context context, SmartAdsConfig config) {
         if (checkNetworkAndFallback(context, config, () -> {
-            if (loadHouseAd(context, config)) {
+            if (config.isHouseAdsAutoFallback() && loadHouseAd(context, config)) {
                 SmartAdsLogger.d("Fallback to House Interstitial (Offline).");
             } else {
                 adStatus = AdStatus.IDLE;
@@ -105,7 +115,7 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
                 ? config.getAdMobInterstitialId()
                 : (config.isTestMode() ? TestAdIds.ADMOB_INTERSTITIAL_ID : null);
         if (adUnitId == null || adUnitId.isEmpty()) {
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 SmartAdsLogger.d("AdMob Int. ID not set. Trying House Ad.");
                 loadHouseAd(context, config);
             } else {
@@ -119,7 +129,7 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
         // 3. AdMob NO_FILL Rate Limiting
         if (com.partharoypc.smartads.utils.AdMobRateLimiter.isRateLimited(adUnitId)) {
             SmartAdsLogger.d("AdMob Rate Limiter active (NO_FILL Cooldown). Skipping AdMob Interstitial Request.");
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 loadHouseAd(context, config);
             } else {
                 adStatus = AdStatus.IDLE;
@@ -150,7 +160,7 @@ public class InterstitialAdManager extends BaseFullScreenAdManager {
                     com.partharoypc.smartads.utils.AdMobRateLimiter.recordNoFill(adUnitId);
                 }
                 // FALLBACK TO HOUSE AD
-                if (loadHouseAd(context, config)) {
+                if (config.isHouseAdsAutoFallback() && loadHouseAd(context, config)) {
                     SmartAdsLogger.d("Fallback to House Interstitial.");
                     return;
                 }

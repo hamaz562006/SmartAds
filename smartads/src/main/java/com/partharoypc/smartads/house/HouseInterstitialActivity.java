@@ -65,12 +65,29 @@ public class HouseInterstitialActivity extends AppCompatActivity {
         ImageButton closeBtn = findViewById(R.id.smartads_house_ad_close_btn);
 
         // Populate Data
-        if (ad.getImageResId() != 0) {
+        if (ad.getImageUrl() != null && !ad.getImageUrl().trim().isEmpty()) {
+            com.bumptech.glide.Glide.with(this)
+                    .load(ad.getImageUrl())
+                    .centerCrop()
+                    .into(mainImage);
+            mainImage.setVisibility(android.view.View.VISIBLE);
+        } else if (ad.getImageResId() != 0) {
             mainImage.setImageResource(ad.getImageResId());
+            mainImage.setVisibility(android.view.View.VISIBLE);
+        } else {
+            mainImage.setVisibility(android.view.View.GONE);
         }
 
-        if (ad.getIconResId() != 0) {
+        if (ad.getIconUrl() != null && !ad.getIconUrl().trim().isEmpty()) {
+            com.bumptech.glide.Glide.with(this)
+                    .load(ad.getIconUrl())
+                    .into(iconImage);
+            iconImage.setVisibility(android.view.View.VISIBLE);
+        } else if (ad.getIconResId() != 0) {
             iconImage.setImageResource(ad.getIconResId());
+            iconImage.setVisibility(android.view.View.VISIBLE);
+        } else {
+            iconImage.setVisibility(android.view.View.GONE);
         }
 
         titleText.setText(ad.getTitle());

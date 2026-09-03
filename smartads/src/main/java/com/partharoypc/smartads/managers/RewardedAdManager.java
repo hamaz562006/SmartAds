@@ -48,13 +48,23 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
         isHouseAdReady = false;
         selectedHouseAd = null;
         selectedHouseAdIndex = -1;
+
+        if (config.getRewardedSource() == com.partharoypc.smartads.AdSource.HOUSE) {
+            SmartAdsLogger.d("Rewarded source set to HOUSE. Loading House Ad directly.");
+            if (!loadHouseAd(context, config)) {
+                adStatus = AdStatus.IDLE;
+                isLoading = false;
+            }
+            return;
+        }
+
         SmartAdsLogger.d("Loading Rewarded Ad...");
         loadAdMob(context, config);
     }
 
     private void loadAdMob(Context context, SmartAdsConfig config) {
         if (checkNetworkAndFallback(context, config, () -> {
-            if (loadHouseAd(context, config)) {
+            if (config.isHouseAdsAutoFallback() && loadHouseAd(context, config)) {
                 SmartAdsLogger.d("Fallback to House Rewarded Ad (Offline).");
             } else {
                 adStatus = AdStatus.IDLE;
@@ -68,7 +78,7 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
                 ? config.getAdMobRewardedId()
                 : (config.isTestMode() ? TestAdIds.ADMOB_REWARDED_ID : null);
         if (adUnitId == null || adUnitId.isEmpty()) {
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 SmartAdsLogger.d("AdMob Rewarded ID not set. Trying House Ad.");
                 loadHouseAd(context, config);
             } else {
@@ -82,7 +92,7 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
         // 3. AdMob NO_FILL Rate Limiting
         if (com.partharoypc.smartads.utils.AdMobRateLimiter.isRateLimited(adUnitId)) {
             SmartAdsLogger.d("AdMob Rate Limiter active (NO_FILL Cooldown). Skipping AdMob Rewarded Request.");
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 loadHouseAd(context, config);
             } else {
                 adStatus = AdStatus.IDLE;
@@ -112,7 +122,7 @@ public class RewardedAdManager extends BaseFullScreenAdManager {
                     com.partharoypc.smartads.utils.AdMobRateLimiter.recordNoFill(adUnitId);
                 }
                 // Fallback to House Ad
-                if (loadHouseAd(context, config)) {
+                if (config.isHouseAdsAutoFallback() && loadHouseAd(context, config)) {
                     SmartAdsLogger.d("Fallback to House Rewarded Ad.");
                     return;
                 }

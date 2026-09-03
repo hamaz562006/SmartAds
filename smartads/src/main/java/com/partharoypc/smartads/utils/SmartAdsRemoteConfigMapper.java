@@ -1,7 +1,12 @@
 package com.partharoypc.smartads.utils;
 
+import com.partharoypc.smartads.AdSource;
 import com.partharoypc.smartads.SmartAdsConfig;
+import com.partharoypc.smartads.house.HouseAd;
+import com.partharoypc.smartads.house.HouseAdsRemoteParser;
 
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -37,7 +42,7 @@ public final class SmartAdsRemoteConfigMapper {
             Object val = entry.getValue();
             if (key == null || val == null) continue;
 
-            String lowerKey = key.toLowerCase();
+            String lowerKey = key.toLowerCase(Locale.ROOT);
 
             if (lowerKey.startsWith("preload_")) {
                 String screen = key.substring(8);
@@ -116,6 +121,43 @@ public final class SmartAdsRemoteConfigMapper {
                 case "house_ads_enable":
                     builder.setHouseAdsEnabled(parseBoolean(val));
                     break;
+                case "house_ads_auto_fallback":
+                case "auto_fallback_house_ads":
+                    builder.setHouseAdsAutoFallback(parseBoolean(val));
+                    break;
+                case "house_ads_json":
+                    String jsonString = String.valueOf(val).trim();
+                    if (jsonString.startsWith("[")) {
+                        List<HouseAd> remoteHouseAds = HouseAdsRemoteParser.parseFromJson(jsonString);
+                        if (!remoteHouseAds.isEmpty()) {
+                            builder.setHouseAds(remoteHouseAds);
+                        }
+                    }
+                    break;
+                case "bn_source":
+                case "banner_source":
+                    builder.setBannerSource(parseAdSource(val));
+                    break;
+                case "iv_source":
+                case "interstitial_source":
+                    builder.setInterstitialSource(parseAdSource(val));
+                    break;
+                case "rv_source":
+                case "rewarded_source":
+                    builder.setRewardedSource(parseAdSource(val));
+                    break;
+                case "ri_source":
+                case "rewarded_interstitial_source":
+                    builder.setRewardedInterstitialSource(parseAdSource(val));
+                    break;
+                case "nt_source":
+                case "native_source":
+                    builder.setNativeSource(parseAdSource(val));
+                    break;
+                case "ao_source":
+                case "app_open_source":
+                    builder.setAppOpenSource(parseAdSource(val));
+                    break;
                 case "banner_id":
                 case "admob_banner_id":
                     builder.setAdMobBannerId(String.valueOf(val));
@@ -167,6 +209,15 @@ public final class SmartAdsRemoteConfigMapper {
         return builder;
     }
 
+    private static AdSource parseAdSource(Object val) {
+        if (val == null) return AdSource.ADMOB;
+        String s = String.valueOf(val).trim().toUpperCase(Locale.ROOT);
+        if ("HOUSE".equals(s) || "HOUSE_ADS".equals(s) || "HOUSEAD".equals(s)) {
+            return AdSource.HOUSE;
+        }
+        return AdSource.ADMOB;
+    }
+
     private static boolean parseBoolean(Object val) {
         if (val instanceof Boolean) {
             return (Boolean) val;
@@ -185,3 +236,4 @@ public final class SmartAdsRemoteConfigMapper {
         }
     }
 }
+

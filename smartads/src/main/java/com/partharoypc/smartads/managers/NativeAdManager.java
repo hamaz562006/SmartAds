@@ -43,6 +43,11 @@ public class NativeAdManager {
      */
     public void loadAndShowAd(Activity activity, FrameLayout adContainer, @LayoutRes int layoutRes,
             SmartAdsConfig config, NativeAdListener listener) {
+        if (config.getNativeSource() == com.partharoypc.smartads.AdSource.HOUSE) {
+            com.partharoypc.smartads.SmartAdsLogger.d("Native source set to HOUSE. Loading House Native directly.");
+            loadHouseNative(activity, adContainer, layoutRes, config, listener);
+            return;
+        }
         loadAdMob(activity, adContainer, layoutRes, null, config, listener);
     }
 
@@ -53,6 +58,11 @@ public class NativeAdManager {
             SmartAdsConfig config, NativeAdListener listener) {
         if (binder == null) {
             if (listener != null) listener.onAdFailed("NativeAdBinder is null.");
+            return;
+        }
+        if (config.getNativeSource() == com.partharoypc.smartads.AdSource.HOUSE) {
+            com.partharoypc.smartads.SmartAdsLogger.d("Native source set to HOUSE. Loading House Native directly.");
+            loadHouseNative(activity, adContainer, binder.getLayoutResId(), config, listener);
             return;
         }
         loadAdMob(activity, adContainer, binder.getLayoutResId(), binder, config, listener);
@@ -79,6 +89,11 @@ public class NativeAdManager {
                 layoutRes = R.layout.smartads_native_ad_medium;
                 break;
         }
+        if (config.getNativeSource() == com.partharoypc.smartads.AdSource.HOUSE) {
+            com.partharoypc.smartads.SmartAdsLogger.d("Native source set to HOUSE. Loading House Native directly.");
+            loadHouseNative(activity, adContainer, layoutRes, config, listener);
+            return;
+        }
         loadAdMob(activity, adContainer, layoutRes, null, config, listener);
     }
 
@@ -100,7 +115,7 @@ public class NativeAdManager {
         // 1. Check Internet
         if (!com.partharoypc.smartads.utils.NetworkUtils.isNetworkAvailable(activity)) {
             SmartAdsLogger.d("No Internet Connection. Skipping AdMob Native.");
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 loadHouseNative(activity, adContainer, layoutRes, config, listener);
             } else {
                 if (listener != null)
@@ -114,7 +129,7 @@ public class NativeAdManager {
                 ? config.getAdMobNativeId()
                 : (config.isTestMode() ? TestAdIds.ADMOB_NATIVE_ID : null);
         if (adUnitId == null || adUnitId.isEmpty()) {
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 SmartAdsLogger.d("AdMob Native ID not set. Trying House Ad.");
                 loadHouseNative(activity, adContainer, layoutRes, config, listener);
             } else {
@@ -127,7 +142,7 @@ public class NativeAdManager {
         // 3. AdMob NO_FILL Rate Limiting
         if (com.partharoypc.smartads.utils.AdMobRateLimiter.isRateLimited(adUnitId)) {
             SmartAdsLogger.d("AdMob Rate Limiter active (NO_FILL Cooldown). Skipping AdMob Native Request.");
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 loadHouseNative(activity, adContainer, layoutRes, config, listener);
             } else {
                 if (listener != null)
@@ -175,7 +190,7 @@ public class NativeAdManager {
                     com.partharoypc.smartads.utils.AdMobRateLimiter.recordNoFill(adUnitId);
                 }
                 // FALLBACK TO HOUSE NATIVE
-                if (config.isHouseAdsEnabled()) {
+                if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                     loadHouseNative(activity, adContainer, layoutRes, config, listener);
                 } else {
                     if (listener != null) {
@@ -224,7 +239,7 @@ public class NativeAdManager {
         if (houseAd == null) {
             com.partharoypc.smartads.SmartAdsLogger.e("No House Native Ad available.");
             if (listener != null)
-                listener.onAdFailed("AdMob failed and no House Ads available.");
+                listener.onAdFailed("No House Ads available.");
             return;
         }
 

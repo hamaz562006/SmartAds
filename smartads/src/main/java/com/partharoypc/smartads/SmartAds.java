@@ -33,6 +33,15 @@ import com.partharoypc.smartads.managers.RewardedAdManager;
 import com.partharoypc.smartads.managers.RewardedInterstitialAdManager;
 import com.partharoypc.smartads.ui.NativeAdBinder;
 import com.partharoypc.smartads.utils.SmartAdsPreloadHelper;
+import com.partharoypc.smartads.utils.SmartAdsRemoteConfigMapper;
+import com.partharoypc.smartads.firebase.SmartAdsFirebaseRemoteConfigHelper;
+
+import android.os.Handler;
+import android.os.Looper;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class SmartAds {
 
@@ -470,6 +479,53 @@ public class SmartAds {
         this.config = newConfig;
         this.adsEnabled = newConfig.isAdsEnabled();
         // Configuration updated. Managers will use new IDs on next load.
+    }
+
+    /**
+     * Synchronizes configuration with Firebase Remote Config and updates internal settings.
+     *
+     * @param context          Android context (Application or Activity).
+     * @param defaultsXmlResId XML resource ID containing default parameters, or 0 if none.
+     * @param onComplete       Optional callback run on the Main Thread after sync completion.
+     */
+    public void syncWithRemoteConfig(Context context, int defaultsXmlResId, Runnable onComplete) {
+        SmartAdsFirebaseRemoteConfigHelper helper = SmartAdsFirebaseRemoteConfigHelper.getInstance();
+        helper.fetchAndActivate(context, defaultsXmlResId, success -> {
+            if (success && config != null) {
+                try {
+                    Set<String> keys = helper.getAllKeys();
+                    Map<String, Object> remoteMap = new HashMap<>();
+                    for (String key : keys) {
+                        remoteMap.put(key, helper.getString(key));
+                    }
+
+                    SmartAdsConfig newConfig = SmartAdsRemoteConfigMapper
+                            .applyRemoteConfig(config.toBuilder(), remoteMap)
+                            .build();
+
+                    updateConfig(newConfig);
+                    AdFrequencyManager.getInstance().updateConfig(newConfig);
+
+                    if (newConfig.getScreenPreloadRules() != null && !newConfig.getScreenPreloadRules().isEmpty()) {
+                        SmartAdsPreloadHelper.applyPreloadRules(newConfig.getScreenPreloadRules());
+                    }
+
+                    SmartAdsLogger.d("SmartAds successfully synced with Firebase Remote Config.");
+                } catch (Exception e) {
+                    SmartAdsLogger.e("Error applying Firebase Remote Config to SmartAdsConfig: " + e.getMessage());
+                }
+            } else {
+                SmartAdsLogger.w("Remote Config sync finished (success=" + success + ").");
+            }
+
+            if (onComplete != null) {
+                if (context instanceof Activity) {
+                    ((Activity) context).runOnUiThread(onComplete);
+                } else {
+                    new Handler(Looper.getMainLooper()).post(onComplete);
+                }
+            }
+        });
     }
 
     public SmartAdsConfig getConfig() {

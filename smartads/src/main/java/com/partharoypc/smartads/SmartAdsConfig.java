@@ -57,6 +57,15 @@ public class SmartAdsConfig {
     private final List<HouseAd> houseAds;
     private final java.util.Map<String, String> screenPreloadRules;
 
+    // Ad Source per format & House Fallback
+    private final AdSource bannerSource;
+    private final AdSource interstitialSource;
+    private final AdSource rewardedSource;
+    private final AdSource rewardedInterstitialSource;
+    private final AdSource nativeSource;
+    private final AdSource appOpenSource;
+    private final boolean houseAdsAutoFallback;
+
     public Builder toBuilder() {
         return new Builder(this);
     }
@@ -105,6 +114,14 @@ public class SmartAdsConfig {
         this.testDeviceIds = List.copyOf(builder.testDeviceIds);
         this.houseAds = List.copyOf(builder.houseAds);
         this.screenPreloadRules = java.util.Collections.unmodifiableMap(new java.util.HashMap<>(builder.screenPreloadRules));
+
+        this.bannerSource = builder.bannerSource;
+        this.interstitialSource = builder.interstitialSource;
+        this.rewardedSource = builder.rewardedSource;
+        this.rewardedInterstitialSource = builder.rewardedInterstitialSource;
+        this.nativeSource = builder.nativeSource;
+        this.appOpenSource = builder.appOpenSource;
+        this.houseAdsAutoFallback = builder.houseAdsAutoFallback;
     }
 
     // =============================================================================================
@@ -263,6 +280,34 @@ public class SmartAdsConfig {
         return houseAds;
     }
 
+    public AdSource getBannerSource() {
+        return bannerSource != null ? bannerSource : AdSource.ADMOB;
+    }
+
+    public AdSource getInterstitialSource() {
+        return interstitialSource != null ? interstitialSource : AdSource.ADMOB;
+    }
+
+    public AdSource getRewardedSource() {
+        return rewardedSource != null ? rewardedSource : AdSource.ADMOB;
+    }
+
+    public AdSource getRewardedInterstitialSource() {
+        return rewardedInterstitialSource != null ? rewardedInterstitialSource : AdSource.ADMOB;
+    }
+
+    public AdSource getNativeSource() {
+        return nativeSource != null ? nativeSource : AdSource.ADMOB;
+    }
+
+    public AdSource getAppOpenSource() {
+        return appOpenSource != null ? appOpenSource : AdSource.ADMOB;
+    }
+
+    public boolean isHouseAdsAutoFallback() {
+        return houseAdsAutoFallback;
+    }
+
     // =============================================================================================
     // HELPER METHODS
     // =============================================================================================
@@ -354,6 +399,15 @@ public class SmartAdsConfig {
         private List<HouseAd> houseAds = new ArrayList<>();
         private final java.util.Map<String, String> screenPreloadRules = new java.util.HashMap<>();
 
+        // Ad Source per format & House Fallback
+        private AdSource bannerSource = AdSource.ADMOB;
+        private AdSource interstitialSource = AdSource.ADMOB;
+        private AdSource rewardedSource = AdSource.ADMOB;
+        private AdSource rewardedInterstitialSource = AdSource.ADMOB;
+        private AdSource nativeSource = AdSource.ADMOB;
+        private AdSource appOpenSource = AdSource.ADMOB;
+        private boolean houseAdsAutoFallback = true;
+
         public Builder() {
         }
 
@@ -404,6 +458,14 @@ public class SmartAdsConfig {
             this.testDeviceIds.addAll(config.testDeviceIds);
             this.houseAds.addAll(config.houseAds);
             this.screenPreloadRules.putAll(config.screenPreloadRules);
+
+            this.bannerSource = config.bannerSource;
+            this.interstitialSource = config.interstitialSource;
+            this.rewardedSource = config.rewardedSource;
+            this.rewardedInterstitialSource = config.rewardedInterstitialSource;
+            this.nativeSource = config.nativeSource;
+            this.appOpenSource = config.appOpenSource;
+            this.houseAdsAutoFallback = config.houseAdsAutoFallback;
         }
 
         // --- Ad Unit IDs ---
@@ -716,6 +778,41 @@ public class SmartAdsConfig {
             if (ads != null) {
                 this.houseAds = new ArrayList<>(ads);
             }
+            return this;
+        }
+
+        public Builder setBannerSource(AdSource source) {
+            this.bannerSource = source != null ? source : AdSource.ADMOB;
+            return this;
+        }
+
+        public Builder setInterstitialSource(AdSource source) {
+            this.interstitialSource = source != null ? source : AdSource.ADMOB;
+            return this;
+        }
+
+        public Builder setRewardedSource(AdSource source) {
+            this.rewardedSource = source != null ? source : AdSource.ADMOB;
+            return this;
+        }
+
+        public Builder setRewardedInterstitialSource(AdSource source) {
+            this.rewardedInterstitialSource = source != null ? source : AdSource.ADMOB;
+            return this;
+        }
+
+        public Builder setNativeSource(AdSource source) {
+            this.nativeSource = source != null ? source : AdSource.ADMOB;
+            return this;
+        }
+
+        public Builder setAppOpenSource(AdSource source) {
+            this.appOpenSource = source != null ? source : AdSource.ADMOB;
+            return this;
+        }
+
+        public Builder setHouseAdsAutoFallback(boolean fallback) {
+            this.houseAdsAutoFallback = fallback;
             return this;
         }
 

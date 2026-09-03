@@ -127,7 +127,12 @@ public class HouseAdLoader {
         }
 
         if (icon != null) {
-            if (ad.getIconResId() != 0) {
+            if (ad.getIconUrl() != null && !ad.getIconUrl().trim().isEmpty()) {
+                com.bumptech.glide.Glide.with(rootView.getContext())
+                        .load(ad.getIconUrl())
+                        .into(icon);
+                icon.setVisibility(View.VISIBLE);
+            } else if (ad.getIconResId() != 0) {
                 icon.setImageResource(ad.getIconResId());
                 icon.setVisibility(View.VISIBLE);
             } else {
@@ -141,7 +146,28 @@ public class HouseAdLoader {
         }
 
         if (mediaView != null) {
-            if (ad.getImageResId() != 0) {
+            if (ad.getImageUrl() != null && !ad.getImageUrl().trim().isEmpty()) {
+                if (mediaView instanceof ImageView) {
+                    com.bumptech.glide.Glide.with(rootView.getContext())
+                            .load(ad.getImageUrl())
+                            .centerCrop()
+                            .into((ImageView) mediaView);
+                } else if (mediaView instanceof android.view.ViewGroup) {
+                    android.view.ViewGroup mediaGroup = (android.view.ViewGroup) mediaView;
+                    mediaGroup.removeAllViews();
+
+                    ImageView imageView = new ImageView(rootView.getContext());
+                    imageView.setLayoutParams(new android.view.ViewGroup.LayoutParams(
+                            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                            android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+                    com.bumptech.glide.Glide.with(rootView.getContext())
+                            .load(ad.getImageUrl())
+                            .centerCrop()
+                            .into(imageView);
+                    mediaGroup.addView(imageView);
+                }
+                mediaView.setVisibility(View.VISIBLE);
+            } else if (ad.getImageResId() != 0) {
                 if (mediaView instanceof ImageView) {
                     ((ImageView) mediaView).setImageResource(ad.getImageResId());
                     ((ImageView) mediaView).setScaleType(ImageView.ScaleType.CENTER_CROP);

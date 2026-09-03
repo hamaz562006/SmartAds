@@ -49,13 +49,23 @@ public class RewardedInterstitialAdManager extends BaseFullScreenAdManager {
         isHouseAdReady = false;
         selectedHouseAd = null;
         selectedHouseAdIndex = -1;
+
+        if (config.getRewardedInterstitialSource() == com.partharoypc.smartads.AdSource.HOUSE) {
+            SmartAdsLogger.d("Rewarded Interstitial source set to HOUSE. Loading House Ad directly.");
+            if (!loadHouseAd(context, config)) {
+                adStatus = AdStatus.IDLE;
+                isLoading = false;
+            }
+            return;
+        }
+
         SmartAdsLogger.d("Loading Rewarded Interstitial Ad...");
         loadAdMob(context, config);
     }
 
     private void loadAdMob(Context context, SmartAdsConfig config) {
         if (checkNetworkAndFallback(context, config, () -> {
-            if (loadHouseAd(context, config)) {
+            if (config.isHouseAdsAutoFallback() && loadHouseAd(context, config)) {
                 SmartAdsLogger.d("Fallback to House Rewarded Interstitial Ad (Offline).");
             } else {
                 adStatus = AdStatus.IDLE;
@@ -69,7 +79,7 @@ public class RewardedInterstitialAdManager extends BaseFullScreenAdManager {
                 ? config.getAdMobRewardedInterstitialId()
                 : (config.isTestMode() ? TestAdIds.ADMOB_REWARDED_INTERSTITIAL_ID : null);
         if (adUnitId == null || adUnitId.isEmpty()) {
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 SmartAdsLogger.d("AdMob Rewarded Interstitial ID not set. Trying House Ad.");
                 loadHouseAd(context, config);
             } else {
@@ -83,7 +93,7 @@ public class RewardedInterstitialAdManager extends BaseFullScreenAdManager {
         // AdMob NO_FILL Rate Limiting
         if (com.partharoypc.smartads.utils.AdMobRateLimiter.isRateLimited(adUnitId)) {
             SmartAdsLogger.d("AdMob Rate Limiter active (NO_FILL Cooldown). Skipping AdMob Rewarded Interstitial Request.");
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 loadHouseAd(context, config);
             } else {
                 adStatus = AdStatus.IDLE;
@@ -113,7 +123,7 @@ public class RewardedInterstitialAdManager extends BaseFullScreenAdManager {
                     com.partharoypc.smartads.utils.AdMobRateLimiter.recordNoFill(adUnitId);
                 }
                 // Fallback to House Ad
-                if (loadHouseAd(context, config)) {
+                if (config.isHouseAdsAutoFallback() && loadHouseAd(context, config)) {
                     SmartAdsLogger.d("Fallback to House Rewarded Interstitial Ad.");
                     return;
                 }

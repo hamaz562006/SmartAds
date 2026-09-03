@@ -62,6 +62,16 @@ public final class SmartAdsLogger {
         dispatchLog(message);
     }
 
+    public static void w(String message) {
+        try {
+            if (isLoggingEnabled()) {
+                Log.w(TAG, message);
+            }
+        } catch (Exception ignored) {
+        }
+        dispatchLog(message);
+    }
+
     public static void e(String message) {
         Log.e(TAG, message);
         dispatchLog(message);

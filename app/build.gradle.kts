@@ -1,5 +1,6 @@
 plugins {
     id("com.android.application")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -59,5 +60,7 @@ dependencies {
     implementation(project(":smartads"))
     implementation("com.google.android.gms:play-services-ads:25.0.0")
 
-
+    // Firebase Remote Config
+    implementation(platform("com.google.firebase:firebase-bom:33.10.0"))
+    implementation("com.google.firebase:firebase-config")
 }

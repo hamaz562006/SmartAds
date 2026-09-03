@@ -39,6 +39,19 @@ public class BannerAdManager {
     @RequiresPermission(Manifest.permission.INTERNET)
     public void loadAndShowAd(Activity activity, FrameLayout adContainer, SmartAdsConfig config,
             BannerAdListener listener) {
+        if (!SmartAds.getInstance().areAdsEnabled() || !config.isBannerEnabled()) {
+            SmartAdsLogger.d("Banner Ad is disabled. Skipping request.");
+            if (listener != null)
+                listener.onAdFailed("Banner ads are disabled.");
+            return;
+        }
+
+        if (config.getBannerSource() == com.partharoypc.smartads.AdSource.HOUSE) {
+            SmartAdsLogger.d("Banner AdSource is HOUSE. Loading House Banner directly.");
+            loadHouseBanner(activity, adContainer, config, listener);
+            return;
+        }
+
         loadAdMob(activity, adContainer, config, listener);
     }
 
@@ -60,7 +73,7 @@ public class BannerAdManager {
         // 1. Check Internet
         if (!com.partharoypc.smartads.utils.NetworkUtils.isNetworkAvailable(activity)) {
             SmartAdsLogger.d("No Internet Connection. Skipping AdMob Banner.");
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 loadHouseBanner(activity, adContainer, config, listener);
             } else {
                 if (listener != null)
@@ -74,7 +87,7 @@ public class BannerAdManager {
                 ? config.getAdMobBannerId()
                 : (config.isTestMode() ? TestAdIds.ADMOB_BANNER_ID : null);
         if (adUnitId == null || adUnitId.isEmpty()) {
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 SmartAdsLogger.d("AdMob Banner ID not set. Trying House Ad.");
                 loadHouseBanner(activity, adContainer, config, listener);
             } else {
@@ -87,7 +100,7 @@ public class BannerAdManager {
         // 3. AdMob NO_FILL Rate Limiting
         if (com.partharoypc.smartads.utils.AdMobRateLimiter.isRateLimited(adUnitId)) {
             SmartAdsLogger.d("AdMob Rate Limiter active (NO_FILL Cooldown). Skipping AdMob Banner Request.");
-            if (config.isHouseAdsEnabled()) {
+            if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                 loadHouseBanner(activity, adContainer, config, listener);
             } else {
                 if (listener != null)
@@ -150,7 +163,7 @@ public class BannerAdManager {
                     com.partharoypc.smartads.utils.AdMobRateLimiter.recordNoFill(adUnitId);
                 }
                 // FALLBACK TO HOUSE AD
-                if (config.isHouseAdsEnabled()) {
+                if (config.isHouseAdsAutoFallback() && config.isHouseAdsEnabled()) {
                     loadHouseBanner(activity, adContainer, config, listener);
                 } else {
                     if (listener != null) {
@@ -192,7 +205,7 @@ public class BannerAdManager {
         if (houseAd == null) {
             SmartAdsLogger.e("No House Banner Ad available.");
             if (listener != null)
-                listener.onAdFailed("AdMob failed and no House Ads available.");
+                listener.onAdFailed("No House Ads available.");
             return;
         }
 
@@ -203,7 +216,12 @@ public class BannerAdManager {
 
         ImageView imageView = houseBannerView.findViewById(R.id.smartads_house_banner_image);
 
-        if (houseAd.getImageResId() != 0) {
+        if (houseAd.getImageUrl() != null && !houseAd.getImageUrl().trim().isEmpty()) {
+            com.bumptech.glide.Glide.with(activity)
+                    .load(houseAd.getImageUrl())
+                    .centerCrop()
+                    .into(imageView);
+        } else if (houseAd.getImageResId() != 0) {
             imageView.setImageResource(houseAd.getImageResId());
         } else {
             imageView.setBackgroundColor(android.graphics.Color.LTGRAY);

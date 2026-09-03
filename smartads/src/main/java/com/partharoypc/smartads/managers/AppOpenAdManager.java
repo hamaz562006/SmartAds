@@ -109,13 +109,35 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
             SmartAdsLogger.d("App Open Ad is currently loading. Skipping fetch.");
             return;
         }
+
+        if (SmartAds.getInstance().getConfig().getAppOpenSource() == com.partharoypc.smartads.AdSource.HOUSE) {
+            SmartAdsLogger.d("App Open source set to HOUSE. Loading House Ad directly.");
+            isLoading = true;
+            adStatus = AdStatus.LOADING;
+            isHouseAdReady = false;
+            selectedHouseAd = null;
+            if (SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
+                List<HouseAd> houseAds = SmartAds.getInstance().getConfig().getHouseAds();
+                selectedHouseAd = HouseAdLoader.selectAd(houseAds);
+                if (selectedHouseAd != null) {
+                    selectedHouseAdIndex = houseAds.indexOf(selectedHouseAd);
+                    isHouseAdReady = true;
+                    onAdLoadedBase();
+                    return;
+                }
+            }
+            isLoading = false;
+            adStatus = AdStatus.FAILED;
+            return;
+        }
+
         String adUnitId = (SmartAds.getInstance().getConfig().getAdMobAppOpenId() != null
                 && !SmartAds.getInstance().getConfig().getAdMobAppOpenId().isEmpty())
                         ? SmartAds.getInstance().getConfig().getAdMobAppOpenId()
                         : (SmartAds.getInstance().getConfig().isTestMode() ? TestAdIds.ADMOB_APP_OPEN_ID : null);
 
         if (adUnitId == null || adUnitId.isEmpty()) {
-            if (SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
+            if (SmartAds.getInstance().getConfig().isHouseAdsAutoFallback() && SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
                 SmartAdsLogger.d("AdMob App Open ID not set. Trying House Ad.");
                 List<HouseAd> houseAds = SmartAds.getInstance().getConfig().getHouseAds();
                 selectedHouseAd = HouseAdLoader.selectAd(houseAds);
@@ -135,7 +157,7 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
         // 3. AdMob NO_FILL Rate Limiting
         if (com.partharoypc.smartads.utils.AdMobRateLimiter.isRateLimited(adUnitId)) {
             SmartAdsLogger.d("AdMob Rate Limiter active (NO_FILL Cooldown). Skipping AdMob App Open Request.");
-            if (SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
+            if (SmartAds.getInstance().getConfig().isHouseAdsAutoFallback() && SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
                 List<HouseAd> houseAds = SmartAds.getInstance().getConfig().getHouseAds();
                 selectedHouseAd = HouseAdLoader.selectAd(houseAds);
                 if (selectedHouseAd != null) {
@@ -179,7 +201,7 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
                     com.partharoypc.smartads.utils.AdMobRateLimiter.recordNoFill(adUnitId);
                 }
                 // FALLBACK TO HOUSE AD
-                if (SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
+                if (SmartAds.getInstance().getConfig().isHouseAdsAutoFallback() && SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
                     List<HouseAd> houseAds = SmartAds.getInstance().getConfig().getHouseAds();
                     selectedHouseAd = HouseAdLoader.selectAd(houseAds);
                     if (selectedHouseAd != null) {
@@ -198,7 +220,7 @@ public class AppOpenAdManager extends BaseFullScreenAdManager
         };
 
         if (checkNetworkAndFallback(application, SmartAds.getInstance().getConfig(), () -> {
-            if (SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
+            if (SmartAds.getInstance().getConfig().isHouseAdsAutoFallback() && SmartAds.getInstance().getConfig().isHouseAdsEnabled()) {
                 List<HouseAd> houseAds = SmartAds.getInstance().getConfig().getHouseAds();
                 selectedHouseAd = HouseAdLoader.selectAd(houseAds);
                 if (selectedHouseAd != null) {
