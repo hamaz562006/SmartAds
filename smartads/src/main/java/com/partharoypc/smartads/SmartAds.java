@@ -17,6 +17,8 @@ import com.google.android.ump.ConsentInformation;
 import com.google.android.ump.ConsentRequestParameters;
 import com.google.android.ump.UserMessagingPlatform;
 import com.partharoypc.smartads.analytics.SmartAdsAdjustAdapter;
+import com.partharoypc.smartads.analytics.SmartAdsAdjustHelper;
+import com.partharoypc.smartads.analytics.SmartAdsAdjustLifecycleAdapter;
 import com.partharoypc.smartads.analytics.SmartAdsAnalyticsListener;
 import com.partharoypc.smartads.analytics.SmartAdsLifecycleListener;
 import com.partharoypc.smartads.listeners.AppOpenAdListener;
@@ -41,9 +43,12 @@ import com.partharoypc.smartads.firebase.SmartAdsFirebaseRemoteConfigHelper;
 import android.os.Handler;
 import android.os.Looper;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class SmartAds {
 
@@ -59,7 +64,7 @@ public class SmartAds {
     private NativeAdManager nativeAdManager;
 
     private SmartAdsAnalyticsListener analyticsListener;
-    private SmartAdsLifecycleListener lifecycleListener;
+    private final List<SmartAdsLifecycleListener> lifecycleListeners = new CopyOnWriteArrayList<>();
     private SmartAdsAdjustAdapter adjustAdapter;
 
     private Application application;
@@ -278,6 +283,7 @@ public class SmartAds {
         bannerAdManager = null;
         nativeAdManager = null;
         analyticsListener = null;
+        lifecycleListeners.clear();
         application = null;
         instance = null;
         SmartAdsLogger.d("SmartAds SDK Shutdown complete.");
@@ -441,20 +447,161 @@ public class SmartAds {
         this.analyticsListener = listener;
     }
 
+    private final SmartAdsLifecycleListener compositeLifecycleListener = new SmartAdsLifecycleListener() {
+        @Override
+        public void onAdLoadStarted(String adFormat, String adSource) {
+            for (SmartAdsLifecycleListener listener : lifecycleListeners) {
+                try {
+                    listener.onAdLoadStarted(adFormat, adSource);
+                } catch (Exception e) {
+                    SmartAdsLogger.e("Error in lifecycle listener onAdLoadStarted: " + e.getMessage());
+                }
+            }
+        }
+
+        @Override
+        public void onAdLoadSuccess(String adFormat, String adSource) {
+            for (SmartAdsLifecycleListener listener : lifecycleListeners) {
+                try {
+                    listener.onAdLoadSuccess(adFormat, adSource);
+                } catch (Exception e) {
+                    SmartAdsLogger.e("Error in lifecycle listener onAdLoadSuccess: " + e.getMessage());
+                }
+            }
+        }
+
+        @Override
+        public void onAdLoadFailed(String adFormat, String adSource, String errorMessage) {
+            for (SmartAdsLifecycleListener listener : lifecycleListeners) {
+                try {
+                    listener.onAdLoadFailed(adFormat, adSource, errorMessage);
+                } catch (Exception e) {
+                    SmartAdsLogger.e("Error in lifecycle listener onAdLoadFailed: " + e.getMessage());
+                }
+            }
+        }
+
+        @Override
+        public void onAdShowSuccess(String adFormat, String adSource) {
+            for (SmartAdsLifecycleListener listener : lifecycleListeners) {
+                try {
+                    listener.onAdShowSuccess(adFormat, adSource);
+                } catch (Exception e) {
+                    SmartAdsLogger.e("Error in lifecycle listener onAdShowSuccess: " + e.getMessage());
+                }
+            }
+        }
+
+        @Override
+        public void onAdShowFailed(String adFormat, String adSource, String errorMessage) {
+            for (SmartAdsLifecycleListener listener : lifecycleListeners) {
+                try {
+                    listener.onAdShowFailed(adFormat, adSource, errorMessage);
+                } catch (Exception e) {
+                    SmartAdsLogger.e("Error in lifecycle listener onAdShowFailed: " + e.getMessage());
+                }
+            }
+        }
+
+        @Override
+        public void onAdClosed(String adFormat, String adSource) {
+            for (SmartAdsLifecycleListener listener : lifecycleListeners) {
+                try {
+                    listener.onAdClosed(adFormat, adSource);
+                } catch (Exception e) {
+                    SmartAdsLogger.e("Error in lifecycle listener onAdClosed: " + e.getMessage());
+                }
+            }
+        }
+
+        @Override
+        public void onAdClicked(String adFormat, String adSource) {
+            for (SmartAdsLifecycleListener listener : lifecycleListeners) {
+                try {
+                    listener.onAdClicked(adFormat, adSource);
+                } catch (Exception e) {
+                    SmartAdsLogger.e("Error in lifecycle listener onAdClicked: " + e.getMessage());
+                }
+            }
+        }
+    };
+
     /**
      * Sets the global ad lifecycle listener for granular load/show/click/close events.
+     * Appends the listener to the internal listener list for full backward compatibility.
      *
      * @param listener The lifecycle listener.
      */
     public void setLifecycleListener(SmartAdsLifecycleListener listener) {
-        this.lifecycleListener = listener;
+        addLifecycleListener(listener);
     }
 
     /**
-     * Returns the global ad lifecycle listener.
+     * Adds an ad lifecycle listener to receive granular load/show/click/close events.
+     *
+     * @param listener The lifecycle listener to add.
+     */
+    public void addLifecycleListener(SmartAdsLifecycleListener listener) {
+        if (listener != null && !lifecycleListeners.contains(listener)) {
+            lifecycleListeners.add(listener);
+        }
+    }
+
+    /**
+     * Removes an ad lifecycle listener.
+     *
+     * @param listener The lifecycle listener to remove.
+     */
+    public void removeLifecycleListener(SmartAdsLifecycleListener listener) {
+        if (listener != null) {
+            lifecycleListeners.remove(listener);
+        }
+    }
+
+    /**
+     * Returns the global composite ad lifecycle listener that delegates to all registered listeners.
+     * Returns null if no listeners are currently registered.
      */
     public SmartAdsLifecycleListener getLifecycleListener() {
-        return lifecycleListener;
+        if (lifecycleListeners.isEmpty()) {
+            return null;
+        }
+        return compositeLifecycleListener;
+    }
+
+    /**
+     * Returns an unmodifiable snapshot list of all registered lifecycle listeners.
+     */
+    public List<SmartAdsLifecycleListener> getLifecycleListeners() {
+        return new ArrayList<>(lifecycleListeners);
+    }
+
+    /**
+     * Enables Adjust attribution and ad lifecycle event tracking via safe reflection.
+     * <p>
+     * این قابلیت کاملاً اختیاری است. برای فعال‌سازی:
+     * <ol>
+     *   <li>وابستگی <code>com.adjust.sdk:adjust-android</code> را به <code>build.gradle.kts</code> اپ خود اضافه کنید.</li>
+     *   <li>متد <code>enableAdjustAttribution</code> را با App Token (از داشبورد Adjust) و نقشهٔ eventName-به-eventToken فراخوانی کنید.</li>
+     * </ol>
+     *
+     * @param application    Application instance.
+     * @param appToken       Adjust App Token from Adjust dashboard.
+     * @param sandboxMode    true for Adjust sandbox environment, false for production.
+     * @param eventTokenMap  Mapping of internal event names (e.g., "sa_interstitial_show_success") to Adjust event tokens.
+     */
+    public void enableAdjustAttribution(Application application, String appToken, boolean sandboxMode,
+            Map<String, String> eventTokenMap) {
+        if (!SmartAdsAdjustHelper.isAdjustSdkAvailable()) {
+            SmartAdsLogger.d(
+                    "Adjust SDK not found in classpath. Skipping attribution setup. Add com.adjust.sdk:adjust-android to your app's dependencies to enable this.");
+            return;
+        }
+        boolean initialized = SmartAdsAdjustHelper.initAdjust(application, appToken, sandboxMode);
+        if (initialized) {
+            addLifecycleListener(new SmartAdsAdjustLifecycleAdapter(eventTokenMap != null ? eventTokenMap : new HashMap<>()));
+            SmartAdsLogger.d("Adjust attribution initialized successfully.");
+        }
     }
 
     /**
